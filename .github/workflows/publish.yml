@@ -135,7 +135,7 @@ jobs:
           for key in "${!PKG_NAMES[@]}"; do
             if echo "$CHANGED" | grep -q "\"$key\""; then
               NAME="${PKG_NAMES[$key]}"
-              NPM_NAME="@reactive/${NAME}"
+              NPM_NAME="@reactive-framework/${NAME}"
 
               if [ "$FIRST" = true ]; then
                 FIRST=false

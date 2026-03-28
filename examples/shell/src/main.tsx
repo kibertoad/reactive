@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { createRegistry } from '@reactive/registry'
+import { createRegistry } from '@reactive-framework/registry'
 import type { AppDependencies, AppSlots } from '@example/app-shared'
 import billing from '@example/billing-module'
 import users from '@example/users-module'
@@ -13,6 +13,7 @@ import { Home } from './components/Home.js'
 const registry = createRegistry<AppDependencies, AppSlots>({
   stores: { auth: authStore, config: configStore },
   services: { httpClient },
+  slots: { commands: [] },
 })
 
 // Register modules

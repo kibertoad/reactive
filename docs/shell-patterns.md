@@ -13,7 +13,7 @@ The shell's `rootComponent` owns the entire layout. Use CSS Grid to define zones
 ```typescript
 // shell/src/components/Layout.tsx
 import { Outlet } from '@tanstack/react-router'
-import { useNavigation, useSlots } from '@reactive/registry'
+import { useNavigation, useSlots } from '@reactive-framework/registry'
 import type { AppSlots } from '@myorg/app-shared'
 
 export function Layout() {
@@ -130,7 +130,7 @@ export interface ShellStore {
 ### Shell renders tabs from slots
 
 ```typescript
-import { useSlots } from '@reactive/registry'
+import { useSlots } from '@reactive-framework/registry'
 import { useStore } from '@myorg/app-shared'
 import type { AppSlots } from '@myorg/app-shared'
 
@@ -195,7 +195,7 @@ The `onSelect` callbacks can use the router or shared stores to trigger navigati
 ### Shell renders the palette
 
 ```typescript
-import { useSlots } from '@reactive/registry'
+import { useSlots } from '@reactive-framework/registry'
 import type { AppSlots } from '@myorg/app-shared'
 
 function CommandPalette({ search }: { search: string }) {

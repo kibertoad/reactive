@@ -69,7 +69,7 @@ When `registry.resolve()` runs, it validates:
 If validation fails, the error message tells you exactly what's missing:
 
 ```
-[@reactive/registry] Module "billing" requires dependencies not provided
+[@reactive-framework/registry] Module "billing" requires dependencies not provided
 by the registry: analytics. Available: auth, config, httpClient
 ```
 

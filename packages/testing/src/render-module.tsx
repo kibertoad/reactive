@@ -5,9 +5,9 @@ import {
   createRouter,
   createRootRoute,
 } from '@tanstack/react-router'
-import { SharedDependenciesContext } from '@reactive/core'
-import type { ReactiveModuleDescriptor, SlotMap } from '@reactive/core'
-import { SlotsContext } from '@reactive/registry'
+import { SharedDependenciesContext } from '@reactive-framework/core'
+import type { ReactiveModuleDescriptor, SlotMap } from '@reactive-framework/core'
+import { SlotsContext } from '@reactive-framework/registry'
 import { RouterProvider } from '@tanstack/react-router'
 import type { StoreApi } from 'zustand'
 

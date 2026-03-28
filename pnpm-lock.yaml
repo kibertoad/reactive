@@ -23,7 +23,7 @@ importers:
       '@lokalise/frontend-http-client':
         specifier: ^7.0.0
         version: 7.2.0(@lokalise/api-contracts@6.7.0(zod@3.25.76))(wretch@2.11.1)(zod@3.25.76)
-      '@reactive/core':
+      '@reactive-framework/core':
         specifier: workspace:*
         version: link:../../packages/core
       wretch:
@@ -54,7 +54,7 @@ importers:
       '@lokalise/frontend-http-client':
         specifier: ^7.0.0
         version: 7.2.0(@lokalise/api-contracts@6.7.0(zod@3.25.76))(wretch@2.11.1)(zod@3.25.76)
-      '@reactive/core':
+      '@reactive-framework/core':
         specifier: workspace:*
         version: link:../../../packages/core
     devDependencies:
@@ -85,7 +85,7 @@ importers:
       '@lokalise/frontend-http-client':
         specifier: ^7.0.0
         version: 7.2.0(@lokalise/api-contracts@6.7.0(zod@3.25.76))(wretch@2.11.1)(zod@3.25.76)
-      '@reactive/core':
+      '@reactive-framework/core':
         specifier: workspace:*
         version: link:../../../packages/core
     devDependencies:
@@ -122,10 +122,10 @@ importers:
       '@lokalise/frontend-http-client':
         specifier: ^7.0.0
         version: 7.2.0(@lokalise/api-contracts@6.7.0(zod@3.25.76))(wretch@2.11.1)(zod@3.25.76)
-      '@reactive/core':
+      '@reactive-framework/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@reactive/registry':
+      '@reactive-framework/registry':
         specifier: workspace:*
         version: link:../../packages/registry
       '@tanstack/react-query':
@@ -226,7 +226,7 @@ importers:
 
   packages/registry:
     dependencies:
-      '@reactive/core':
+      '@reactive-framework/core':
         specifier: workspace:*
         version: link:../core
     devDependencies:
@@ -263,10 +263,10 @@ importers:
 
   packages/testing:
     dependencies:
-      '@reactive/core':
+      '@reactive-framework/core':
         specifier: workspace:*
         version: link:../core
-      '@reactive/registry':
+      '@reactive-framework/registry':
         specifier: workspace:*
         version: link:../registry
     devDependencies:

@@ -39,7 +39,7 @@ Plug-and-play modular framework for React. Build frontend features as independen
 │  - Provides root layout                                 │
 │                                                         │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │  @reactive/registry                                │ │
+│  │  @reactive-framework/registry                                │ │
 │  │  - Validates dependencies                          │ │
 │  │  - Composes TanStack Router route tree             │ │
 │  │  - Builds navigation manifest                      │ │
@@ -92,7 +92,7 @@ Plug-and-play modular framework for React. Build frontend features as independen
 The CLI scaffolds a complete project with shell, app-shared, and a first module:
 
 ```bash
-npx @reactive/cli init my-app --scope @myorg --module dashboard
+npx @reactive-framework/cli init my-app --scope @myorg --module dashboard
 cd my-app
 pnpm install
 pnpm dev
@@ -165,7 +165,7 @@ app-shared/
 
 ```typescript
 // app-shared/src/index.ts
-import { createSharedHooks } from '@reactive/core'
+import { createSharedHooks } from '@reactive-framework/core'
 import type { Wretch } from 'wretch'
 
 export interface AuthStore {
@@ -195,7 +195,7 @@ export const { useStore, useService } = createSharedHooks<AppDependencies>()
 **Rules:**
 
 - The app-shared package is the **only** package that both the shell and modules depend on. It is the boundary between them.
-- Modules import `useStore` and `useService` from this package — never from `@reactive/core` directly.
+- Modules import `useStore` and `useService` from this package — never from `@reactive-framework/core` directly.
 - Zustand store types go in `AppDependencies` for reactive state. Non-reactive services (HTTP client, loggers) also go in `AppDependencies`.
 - The shell must provide implementations for every key in `AppDependencies`. The registry validates this at `resolve()` time against each module's `requires` list.
 - Keep this package lightweight. It should contain only types, hooks, zod schemas, and domain types — no React components, no business logic.
@@ -204,7 +204,7 @@ export const { useStore, useService } = createSharedHooks<AppDependencies>()
 
 ## Creating a Module
 
-> **CLI shortcut:** `npx @reactive/cli create module billing` scaffolds the module, wires it into the shell's `main.tsx` and `package.json`, then run `pnpm install`.
+> **CLI shortcut:** `npx @reactive-framework/cli create module billing` scaffolds the module, wires it into the shell's `main.tsx` and `package.json`, then run `pnpm install`.
 
 A module is an npm package that exports a `ReactiveModuleDescriptor` via `defineModule()`.
 
@@ -226,7 +226,7 @@ modules/billing/
 
 ```typescript
 // modules/billing/src/index.ts
-import { defineModule } from '@reactive/core'
+import { defineModule } from '@reactive-framework/core'
 import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
 import type { AppDependencies } from '@example/app-shared'
 
@@ -333,7 +333,7 @@ export default function InvoiceList() {
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@reactive/core": "^0.1.0",
+    "@reactive-framework/core": "^0.1.0",
     "@example/app-shared": "workspace:*",
     "@lokalise/frontend-http-client": "^7.0.0"
   },
@@ -518,7 +518,7 @@ const httpClient = useService('httpClient')
 If a module declares `requires: ['auth', 'httpClient']` and the registry doesn't have `httpClient` in its stores or services, `resolve()` throws:
 
 ```
-[@reactive/registry] Module "billing" requires dependencies not provided
+[@reactive-framework/registry] Module "billing" requires dependencies not provided
 by the registry: httpClient. Available: auth, config
 ```
 
@@ -532,7 +532,7 @@ The shell is a Vite application that creates shared dependencies, registers modu
 
 ```typescript
 import { createRoot } from 'react-dom/client'
-import { createRegistry } from '@reactive/registry'
+import { createRegistry } from '@reactive-framework/registry'
 import type { AppDependencies } from '@example/app-shared'
 import billing from '@example/billing-module'
 import users from '@example/users-module'
@@ -651,7 +651,7 @@ defineModule<AppDependencies>({
 ### Rendering navigation in the layout
 
 ```typescript
-import { useNavigation } from '@reactive/registry'
+import { useNavigation } from '@reactive-framework/registry'
 import { Link, useLocation } from '@tanstack/react-router'
 
 function Sidebar() {
@@ -715,7 +715,7 @@ Every slot value must be an array type — the registry concatenates contributio
 ### Contributing from a module
 
 ```typescript
-import { defineModule } from '@reactive/core'
+import { defineModule } from '@reactive-framework/core'
 import type { AppDependencies, AppSlots } from '@myorg/app-shared'
 
 export default defineModule<AppDependencies, AppSlots>({
@@ -738,11 +738,12 @@ Modules only contribute to the slots they care about — `slots` is `Partial<App
 ### Reading slots in the shell
 
 ```typescript
-import { useSlots } from '@reactive/registry'
+import { useSlots } from '@reactive-framework/registry'
 import type { AppSlots } from '@myorg/app-shared'
 
 function CommandPalette() {
-  const { commands } = useSlots<AppSlots>()
+  const slots = useSlots<AppSlots>()
+  const commands = slots.commands ?? []
 
   return (
     <ul>
@@ -758,14 +759,17 @@ function CommandPalette() {
 
 ### Wiring the registry
 
-Pass `AppSlots` as the second type parameter to `createRegistry`:
+Pass `AppSlots` as the second type parameter to `createRegistry`. Provide `slots` with empty arrays for every declared key — this guarantees all keys exist in the manifest even if no module contributes:
 
 ```typescript
 const registry = createRegistry<AppDependencies, AppSlots>({
   stores: { auth: authStore, config: configStore },
   services: { httpClient },
+  slots: { commands: [] },
 })
 ```
+
+Without `slots` defaults, accessing a key that no module contributed to would return `undefined`. The defaults prevent this.
 
 ### Lazy modules and slots
 
@@ -894,10 +898,10 @@ See the [React Compiler documentation](https://react.dev/learn/react-compiler) f
 
 ## Testing Modules
 
-`@reactive/testing` provides `renderModule()` to test a module in isolation with mocked dependencies.
+`@reactive-framework/testing` provides `renderModule()` to test a module in isolation with mocked dependencies.
 
 ```typescript
-import { renderModule, createMockStore } from '@reactive/testing'
+import { renderModule, createMockStore } from '@reactive-framework/testing'
 import billing from '@example/billing-module'
 import type { AuthStore } from '@example/app-shared'
 import wretch from 'wretch'
@@ -965,10 +969,10 @@ The module's code is only loaded when the user first navigates to `/admin/*`.
 ```
 reactive/
 ├── packages/
-│   ├── cli/                     # @reactive/cli — project scaffolding CLI
-│   ├── core/                    # @reactive/core — module types, hooks, defineModule()
-│   ├── registry/                # @reactive/registry — composition, validation, providers
-│   └── testing/                 # @reactive/testing — test harness
+│   ├── cli/                     # @reactive-framework/cli — project scaffolding CLI
+│   ├── core/                    # @reactive-framework/core — module types, hooks, defineModule()
+│   ├── registry/                # @reactive-framework/registry — composition, validation, providers
+│   └── testing/                 # @reactive-framework/testing — test harness
 ├── examples/
 │   ├── app-shared/              # @example/app-shared — types, hooks, API contracts
 │   ├── shell/                   # Example host app (Vite 8 + React Compiler)
@@ -984,10 +988,10 @@ reactive/
 
 | Package | Purpose | Size |
 |---|---|---|
-| `@reactive/core` | Module types, `defineModule()`, `createSharedHooks()` | ~1 KB |
-| `@reactive/registry` | `createRegistry()`, route composition, validation, navigation manifest, `useNavigation()` | ~5.6 KB |
-| `@reactive/testing` | `renderModule()`, `createMockStore()` | ~1 KB |
-| `@reactive/cli` | `reactive init`, `reactive create module`, `reactive create store` | N/A (Node CLI) |
+| `@reactive-framework/core` | Module types, `defineModule()`, `createSharedHooks()` | ~1 KB |
+| `@reactive-framework/registry` | `createRegistry()`, route composition, validation, navigation manifest, `useNavigation()` | ~5.6 KB |
+| `@reactive-framework/testing` | `renderModule()`, `createMockStore()` | ~1 KB |
+| `@reactive-framework/cli` | `reactive init`, `reactive create module`, `reactive create store` | N/A (Node CLI) |
 
 ### Building packages
 
@@ -995,7 +999,7 @@ Framework packages use Vite 8 library mode (ESM only):
 
 ```bash
 pnpm build                    # Build all packages + shell
-pnpm --filter @reactive/core build   # Build a single package
+pnpm --filter @reactive-framework/core build   # Build a single package
 pnpm --filter shell dev       # Run example shell in dev mode
 ```
 
@@ -1003,7 +1007,7 @@ pnpm --filter shell dev       # Run example shell in dev mode
 
 ## CLI Reference
 
-`@reactive/cli` provides commands for scaffolding projects, modules, and stores. All commands support both interactive (prompts) and non-interactive (flags) modes.
+`@reactive-framework/cli` provides commands for scaffolding projects, modules, and stores. All commands support both interactive (prompts) and non-interactive (flags) modes.
 
 ### reactive init
 
@@ -1104,7 +1108,7 @@ npx playwright test
 
 ## API Reference
 
-### @reactive/core
+### @reactive-framework/core
 
 | Export | Type | Description |
 |---|---|---|
@@ -1117,7 +1121,7 @@ npx playwright test
 | `ModuleLifecycle<T>` | Type | Lifecycle hooks shape. |
 | `SlotMap` | Type | Constraint type for slot definitions: `Record<string, readonly unknown[]>`. |
 
-### @reactive/registry
+### @reactive-framework/registry
 
 | Export | Type | Description |
 |---|---|---|
@@ -1133,7 +1137,7 @@ npx playwright test
 | `NavigationGroup` | Type | `{ group, items }`. |
 | `ResolveOptions` | Type | `{ rootComponent, indexComponent, notFoundComponent }`. |
 
-### @reactive/testing
+### @reactive-framework/testing
 
 | Export | Type | Description |
 |---|---|---|

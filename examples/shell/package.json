@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@reactive/core": "workspace:*",
-    "@reactive/registry": "workspace:*",
+    "@reactive-framework/core": "workspace:*",
+    "@reactive-framework/registry": "workspace:*",
     "@example/app-shared": "workspace:*",
     "@example/billing-module": "workspace:*",
     "@example/users-module": "workspace:*",

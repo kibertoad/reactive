@@ -1,4 +1,4 @@
-import type { ReactiveModuleDescriptor, LazyModuleDescriptor } from '@reactive/core'
+import type { ReactiveModuleDescriptor, LazyModuleDescriptor } from '@reactive-framework/core'
 
 export function validateNoDuplicateIds(
   modules: ReactiveModuleDescriptor[],
@@ -8,7 +8,7 @@ export function validateNoDuplicateIds(
   for (const mod of modules) {
     if (ids.has(mod.id)) {
       throw new Error(
-        `[@reactive/registry] Duplicate module ID "${mod.id}". Each module must have a unique ID.`,
+        `[@reactive-framework/registry] Duplicate module ID "${mod.id}". Each module must have a unique ID.`,
       )
     }
     ids.add(mod.id)
@@ -16,7 +16,7 @@ export function validateNoDuplicateIds(
   for (const mod of lazyModules) {
     if (ids.has(mod.id)) {
       throw new Error(
-        `[@reactive/registry] Duplicate module ID "${mod.id}". Each module must have a unique ID.`,
+        `[@reactive-framework/registry] Duplicate module ID "${mod.id}". Each module must have a unique ID.`,
       )
     }
     ids.add(mod.id)
@@ -32,7 +32,7 @@ export function validateDependencies(
     const missing = mod.requires.filter((key) => !availableKeys.has(key as string))
     if (missing.length > 0) {
       throw new Error(
-        `[@reactive/registry] Module "${mod.id}" requires dependencies not provided by the registry: ` +
+        `[@reactive-framework/registry] Module "${mod.id}" requires dependencies not provided by the registry: ` +
           `${missing.map(String).join(', ')}. ` +
           `Available: ${[...availableKeys].join(', ') || '(none)'}`,
       )

@@ -21,7 +21,7 @@ export class ModuleErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(
-      `[@reactive/registry] Module "${this.props.moduleId}" encountered an error:`,
+      `[@reactive-framework/registry] Module "${this.props.moduleId}" encountered an error:`,
       error,
       info,
     )

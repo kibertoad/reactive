@@ -1,4 +1,4 @@
-import { createSharedHooks } from '@reactive/core'
+import { createSharedHooks } from '@reactive-framework/core'
 import type { LoginCredentials, User } from './types.js'
 import type { Wretch } from 'wretch'
 

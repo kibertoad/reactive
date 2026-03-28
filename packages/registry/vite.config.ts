@@ -19,7 +19,7 @@ export default defineConfig({
         '@tanstack/react-router',
         '@tanstack/react-query',
         'zustand',
-        '@reactive/core',
+        '@reactive-framework/core',
       ],
     },
     sourcemap: true,

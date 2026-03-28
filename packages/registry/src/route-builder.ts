@@ -3,7 +3,7 @@ import {
   createRoute,
 } from '@tanstack/react-router'
 import type { AnyRoute } from '@tanstack/react-router'
-import type { ReactiveModuleDescriptor, LazyModuleDescriptor } from '@reactive/core'
+import type { ReactiveModuleDescriptor, LazyModuleDescriptor } from '@reactive-framework/core'
 
 export interface RouteBuilderOptions {
   /** Component for the root layout (renders <Outlet /> for child routes) */

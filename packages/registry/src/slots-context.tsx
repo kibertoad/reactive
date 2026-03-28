@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { SlotMap } from '@reactive/core'
+import type { SlotMap } from '@reactive-framework/core'
 
 export const SlotsContext = createContext<SlotMap | null>(null)
 
@@ -15,7 +15,7 @@ export function useSlots<TSlots extends SlotMap>(): TSlots {
   const slots = useContext(SlotsContext)
   if (!slots) {
     throw new Error(
-      '[@reactive/registry] useSlots must be used within a <ReactiveApp />.',
+      '[@reactive-framework/registry] useSlots must be used within a <ReactiveApp />.',
     )
   }
   return slots as TSlots

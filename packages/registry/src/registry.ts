@@ -1,7 +1,7 @@
 import { createRouter } from '@tanstack/react-router'
 import { QueryClient } from '@tanstack/react-query'
 import type { StoreApi } from 'zustand'
-import type { ReactiveModuleDescriptor, LazyModuleDescriptor, SlotMap } from '@reactive/core'
+import type { ReactiveModuleDescriptor, LazyModuleDescriptor, SlotMap } from '@reactive-framework/core'
 import type { RegistryConfig, ApplicationManifest, NavigationManifest } from './types.js'
 import { validateNoDuplicateIds, validateDependencies } from './validation.js'
 import { buildNavigationManifest } from './navigation.js'
@@ -39,7 +39,7 @@ export function createRegistry<
   TSharedDependencies extends Record<string, any>,
   TSlots extends SlotMap = SlotMap,
 >(
-  config: RegistryConfig<TSharedDependencies>,
+  config: RegistryConfig<TSharedDependencies, TSlots>,
 ): ReactiveRegistry<TSharedDependencies, TSlots> {
   const modules: ReactiveModuleDescriptor<TSharedDependencies, TSlots>[] = []
   const lazyModules: LazyModuleDescriptor<TSharedDependencies, TSlots>[] = []
@@ -55,7 +55,7 @@ export function createRegistry<
     register(module) {
       if (resolved) {
         throw new Error(
-          '[@reactive/registry] Cannot register modules after resolve() has been called.',
+          '[@reactive-framework/registry] Cannot register modules after resolve() has been called.',
         )
       }
       modules.push(module)
@@ -64,7 +64,7 @@ export function createRegistry<
     registerLazy(descriptor) {
       if (resolved) {
         throw new Error(
-          '[@reactive/registry] Cannot register modules after resolve() has been called.',
+          '[@reactive-framework/registry] Cannot register modules after resolve() has been called.',
         )
       }
       lazyModules.push(descriptor)
@@ -73,7 +73,7 @@ export function createRegistry<
     resolve(options?: ResolveOptions) {
       if (resolved) {
         throw new Error(
-          '[@reactive/registry] resolve() can only be called once.',
+          '[@reactive-framework/registry] resolve() can only be called once.',
         )
       }
       resolved = true
@@ -106,7 +106,7 @@ export function createRegistry<
 
       // Build navigation and slots
       const navigation: NavigationManifest = buildNavigationManifest(mods)
-      const slots = buildSlotsManifest<TSlots>(modules)
+      const slots = buildSlotsManifest<TSlots>(modules, config.slots)
 
       // Build stores and services maps for the context
       const stores: Record<string, StoreApi<unknown>> = {}

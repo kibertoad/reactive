@@ -1,7 +1,7 @@
 import type { StoreApi } from 'zustand'
 import type { Router } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
-import type { NavigationItem, SlotMap } from '@reactive/core'
+import type { NavigationItem, SlotMap } from '@reactive-framework/core'
 
 /**
  * Configuration for creating a registry.
@@ -9,6 +9,7 @@ import type { NavigationItem, SlotMap } from '@reactive/core'
  */
 export interface RegistryConfig<
   TSharedDependencies extends Record<string, any>,
+  TSlots extends SlotMap = SlotMap,
 > {
   /** Zustand stores — keys must match TSharedDependencies keys */
   stores?: {
@@ -19,6 +20,13 @@ export interface RegistryConfig<
   services?: {
     [K in keyof TSharedDependencies]?: TSharedDependencies[K]
   }
+
+  /**
+   * Default slot values. Every key defined here is guaranteed to exist
+   * in the resolved slots manifest, even if no module contributes to it.
+   * Module contributions are appended to these defaults.
+   */
+  slots?: { [K in keyof TSlots]?: TSlots[K] }
 }
 
 export interface NavigationGroup {

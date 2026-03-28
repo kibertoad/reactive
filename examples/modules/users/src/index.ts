@@ -1,4 +1,4 @@
-import { defineModule } from '@reactive/core'
+import { defineModule } from '@reactive-framework/core'
 import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
 import type { AppDependencies, AppSlots } from '@example/app-shared'
 

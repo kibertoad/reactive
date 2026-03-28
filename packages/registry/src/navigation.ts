@@ -1,4 +1,4 @@
-import type { ReactiveModuleDescriptor, NavigationItem } from '@reactive/core'
+import type { ReactiveModuleDescriptor, NavigationItem } from '@reactive-framework/core'
 import type { NavigationManifest, NavigationGroup } from './types.js'
 
 export function buildNavigationManifest(

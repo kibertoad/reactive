@@ -14,8 +14,8 @@ export function shellPackageJson(params: {
         preview: 'vite preview',
       },
       dependencies: {
-        '@reactive/core': '^0.1.0',
-        '@reactive/registry': '^0.1.0',
+        '@reactive-framework/core': '^0.1.0',
+        '@reactive-framework/registry': '^0.1.0',
         [`${params.scope}/app-shared`]: 'workspace:*',
         [`${params.scope}/${params.moduleName}-module`]: 'workspace:*',
         '@lokalise/frontend-http-client': '^7.0.0',
@@ -98,7 +98,7 @@ export function shellMain(params: {
   importName: string
 }): string {
   return `import { createRoot } from 'react-dom/client'
-import { createRegistry } from '@reactive/registry'
+import { createRegistry } from '@reactive-framework/registry'
 import type { AppDependencies, AppSlots } from '${params.scope}/app-shared'
 import ${params.importName} from '${params.scope}/${params.moduleName}-module'
 import { authStore } from './stores/auth.js'
@@ -111,6 +111,7 @@ import { Home } from './components/Home.js'
 const registry = createRegistry<AppDependencies, AppSlots>({
   stores: { auth: authStore, config: configStore },
   services: { httpClient },
+  slots: { commands: [] },
 })
 
 // Register modules
@@ -257,7 +258,7 @@ export function Layout() {
 
 export function shellSidebar(params: { projectName: string }): string {
   return `import { Link, useLocation } from '@tanstack/react-router'
-import { useNavigation } from '@reactive/registry'
+import { useNavigation } from '@reactive-framework/registry'
 
 export function Sidebar() {
   const navigation = useNavigation()

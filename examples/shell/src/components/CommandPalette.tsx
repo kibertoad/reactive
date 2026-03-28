@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useSlots } from '@reactive/registry'
+import { useSlots } from '@reactive-framework/registry'
 import type { AppSlots } from '@example/app-shared'
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const { commands } = useSlots<AppSlots>()
+  const slots = useSlots<AppSlots>()
+  const commands = slots.commands ?? []
 
   const filtered = commands.filter((cmd) =>
     cmd.label.toLowerCase().includes(search.toLowerCase()),

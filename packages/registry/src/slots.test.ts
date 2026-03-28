@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { buildSlotsManifest } from './slots.js'
-import type { ReactiveModuleDescriptor, SlotMap } from '@reactive/core'
+import type { ReactiveModuleDescriptor, SlotMap } from '@reactive-framework/core'
 import type { AnyRoute } from '@tanstack/react-router'
 
 interface TestSlots extends SlotMap {
@@ -87,5 +87,28 @@ describe('buildSlotsManifest', () => {
     ])
 
     expect(result.commands).toEqual([])
+  })
+
+  it('initializes declared keys from defaults even when no module contributes', () => {
+    const result = buildSlotsManifest<TestSlots>(
+      [fakeModule({ id: 'no-slots' })],
+      { commands: [], badges: [] },
+    )
+
+    expect(result.commands).toEqual([])
+    expect(result.badges).toEqual([])
+  })
+
+  it('appends module contributions to defaults', () => {
+    const result = buildSlotsManifest<TestSlots>(
+      [fakeModule({
+        id: 'billing',
+        slots: { commands: [{ id: 'cmd-1', label: 'Open Billing' }] },
+      })],
+      { commands: [], badges: [] },
+    )
+
+    expect(result.commands).toEqual([{ id: 'cmd-1', label: 'Open Billing' }])
+    expect(result.badges).toEqual([])
   })
 })
