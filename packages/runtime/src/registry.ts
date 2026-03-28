@@ -33,7 +33,7 @@ export interface ReactiveRegistry<
    * Resolve all modules and produce the application manifest.
    * Validates dependencies and builds the route tree.
    */
-  resolve(options?: ResolveOptions): ApplicationManifest<TSharedDependencies, TSlots>;
+  resolve(options?: ResolveOptions): ApplicationManifest<TSlots>;
 }
 
 export interface ResolveOptions {

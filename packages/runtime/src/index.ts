@@ -22,7 +22,7 @@ export { useZones } from "./zones.js";
 export { useActiveZones } from "./active-zones.js";
 
 // Modules
-export { useModules, getModuleMeta } from "./modules-context.js";
+export { useModules, getModuleMeta, ModulesContext } from "./modules-context.js";
 
 // Error boundary (for custom usage)
 export { ModuleErrorBoundary } from "./error-boundary.js";

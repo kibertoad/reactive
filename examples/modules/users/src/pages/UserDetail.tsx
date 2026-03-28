@@ -1,7 +1,7 @@
-import { useStore, useService, getUserContract } from "@example/app-shared";
+import { useService, getUserContract } from "@example/app-shared";
 import { sendByContract } from "@lokalise/frontend-http-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, Link } from "@tanstack/react-router";
+import { useParams } from "@tanstack/react-router";
 import { userNotes } from "../stores/user-notes.js";
 
 export default function UserDetail() {

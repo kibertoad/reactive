@@ -1,6 +1,5 @@
 import { useModules } from "@tanstack-react-modules/runtime";
 import { useStore } from "@example/app-shared";
-import { Link } from "@tanstack/react-router";
 
 export function Home() {
   const appName = useStore("config", (s) => s.appName);

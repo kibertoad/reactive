@@ -46,7 +46,7 @@ export function appSharedTsconfig(): string {
   );
 }
 
-export function appSharedIndex(params: { scope: string }): string {
+export function appSharedIndex(_params: { scope: string }): string {
   return `import { createSharedHooks } from '@tanstack-react-modules/core'
 import type { LoginCredentials, User } from './types.js'
 import type { Wretch } from 'wretch'

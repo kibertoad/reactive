@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { createRegistry } from "./registry.js";
 import { createStore } from "zustand/vanilla";
 import { createRoute } from "@tanstack/react-router";

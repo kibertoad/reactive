@@ -59,10 +59,7 @@ export interface ModuleEntry {
   readonly zones?: Readonly<Record<string, React.ComponentType<any>>>;
 }
 
-export interface ApplicationManifest<
-  TSharedDependencies extends Record<string, any> = Record<string, any>,
-  TSlots extends SlotMapOf<TSlots> = SlotMap,
-> {
+export interface ApplicationManifest<TSlots extends SlotMapOf<TSlots> = SlotMap> {
   /** The root React component with all providers wired */
   readonly App: React.ComponentType;
   /** The TanStack Router instance */

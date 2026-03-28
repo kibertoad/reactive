@@ -56,7 +56,7 @@ function separateDeps(deps: Record<string, unknown>) {
   return { stores, services };
 }
 
-function buildModuleEntry(module: ReactiveModuleDescriptor): ModuleEntry {
+function buildModuleEntry(module: ReactiveModuleDescriptor<any>): ModuleEntry {
   return {
     id: module.id,
     version: module.version,
