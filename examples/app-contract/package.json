@@ -1,0 +1,30 @@
+{
+  "name": "@example/app-contract",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@reactive/core": "workspace:*",
+    "@lokalise/api-contracts": "^6.0.0",
+    "@lokalise/frontend-http-client": "^7.0.0",
+    "wretch": "^2.11.0",
+    "zod": "^3.25.0"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "react": "^19.0.0",
+    "zustand": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^6.0.2"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@reactive/skills",
+  "version": "0.1.0",
+  "description": "AI coding skills for the Reactive modular React framework",
+  "keywords": ["skills", "ai-skills", "reactive", "react", "modular"],
+  "license": "MIT",
+  "skills": [
+    "create-module",
+    "wire-shared-dependencies",
+    "add-api-query",
+    "test-module",
+    "register-module"
+  ]
+}

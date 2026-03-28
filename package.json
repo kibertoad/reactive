@@ -1,0 +1,20 @@
+{
+  "name": "reactive",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Modular React framework for building composable frontend systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kibertoad/reactive.git"
+  },
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev": "pnpm --filter shell dev",
+    "test": "vitest run",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.0"
+  }
+}

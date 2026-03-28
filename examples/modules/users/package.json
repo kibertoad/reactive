@@ -1,0 +1,32 @@
+{
+  "name": "@example/users-module",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@reactive/core": "workspace:*",
+    "@example/app-contract": "workspace:*",
+    "@lokalise/frontend-http-client": "^7.0.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.95.0",
+    "@tanstack/react-router": "^1.120.0",
+    "react": "^19.0.0",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@tanstack/react-query": "^5.95.0",
+    "@tanstack/react-router": "^1.120.0",
+    "react": "^19.0.0",
+    "zustand": "^5.0.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^6.0.2"
+  }
+}

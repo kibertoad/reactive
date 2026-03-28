@@ -1,0 +1,35 @@
+import { defineModule } from '@reactive/core'
+import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
+import type { AppDependencies } from '@example/app-contract'
+
+export default defineModule<AppDependencies>({
+  id: 'users',
+  version: '0.1.0',
+
+  createRoutes: (parentRoute) => {
+    const usersRoot = createRoute({
+      getParentRoute: () => parentRoute,
+      path: 'users',
+    })
+
+    const userList = createRoute({
+      getParentRoute: () => usersRoot,
+      path: '/',
+      component: lazyRouteComponent(() => import('./pages/UserList.js')),
+    })
+
+    const userDetail = createRoute({
+      getParentRoute: () => usersRoot,
+      path: '$userId',
+      component: lazyRouteComponent(() => import('./pages/UserDetail.js')),
+    })
+
+    return usersRoot.addChildren([userList, userDetail])
+  },
+
+  navigation: [
+    { label: 'Users', to: '/users', icon: 'users', group: 'admin', order: 20 },
+  ],
+
+  requires: ['auth', 'httpClient'],
+})
