@@ -283,6 +283,17 @@ toggleSidebar();
 
 Both the module triggering the change and the shell rendering it subscribe to the same Zustand store.
 
+### Reactive services: external sources
+
+Use for external sources you subscribe to but don't control — call adapters, presence systems, websocket connections. These are registered in the `reactiveServices` bucket and implement `ReactiveService<T>` (`subscribe` + `getSnapshot`, matching React's `useSyncExternalStore` API).
+
+```typescript
+const callState = useReactiveService("call", (s) => s.status);
+// Re-renders when the call adapter's state changes
+```
+
+Unlike stores (state you own), reactive services wrap external subscriptions. Unlike plain services (static utilities), reactive services trigger re-renders.
+
 ### React Query: server data
 
 Use for data fetched from APIs. React Query handles caching, deduplication, and background refetching.
@@ -339,6 +350,7 @@ Deeper routes override shallower ones. A billing section root can set a default 
 | Is it known at module registration time?           | Slots                                                                    |
 | Does it vary per route within a module?            | Route zones (`staticData`)                                               |
 | Does it change at runtime?                         | Shared store                                                             |
+| Is it an external source you subscribe to?         | Reactive service (`useReactiveService`)                                  |
 | Does it come from an API?                          | React Query                                                              |
 | Does it need to trigger re-renders across modules? | Shared store (Zustand subscriptions) or React Query (cache invalidation) |
 
@@ -385,7 +397,7 @@ function BillingDashboard() {
 }
 ```
 
-`useOptional` checks both stores and services. Returns `null` if the key isn't registered in either bucket.
+`useOptional` checks all three buckets (stores, then reactive services, then services). Returns `null` if the key isn't registered in any bucket.
 
 ## Cross-Store Coordination
 

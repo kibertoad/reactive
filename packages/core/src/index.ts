@@ -4,11 +4,15 @@ export type {
   LazyModuleDescriptor,
   NavigationItem,
   ModuleLifecycle,
+  ReactiveService,
   SlotMap,
   SlotMapOf,
   ZoneMap,
   ZoneMapOf,
 } from "./types.js";
+
+// Detection helpers
+export { isStoreApi, isReactiveService, separateDeps } from "./is-store-api.js";
 
 // Module definition
 export { defineModule } from "./define-module.js";

@@ -1,6 +1,32 @@
 import type { AnyRoute } from "@tanstack/react-router";
 
 /**
+ * A reactive external source that components can subscribe to.
+ * Matches React's useSyncExternalStore API — the standard way to
+ * subscribe to external state that isn't a React/zustand store.
+ *
+ * Use for integrations you observe but don't control: call adapters,
+ * presence systems, websocket connections, push notifications.
+ *
+ * @example
+ * ```ts
+ * const callReactiveService: ReactiveService<CallSnapshot> = {
+ *   subscribe: (cb) => callAdapter.onCallEvent(cb),
+ *   getSnapshot: () => ({
+ *     state: callAdapter.getCallState(),
+ *     caller: callAdapter.getCallerInfo(),
+ *   }),
+ * }
+ * ```
+ */
+export interface ReactiveService<T> {
+  /** Subscribe to changes. Returns unsubscribe function. */
+  subscribe: (callback: () => void) => () => void;
+  /** Get current snapshot. Must return a stable reference when state hasn't changed. */
+  getSnapshot: () => T;
+}
+
+/**
  * Default type for slot definitions when no explicit type is provided.
  * Every slot value must be a readonly array — modules contribute items
  * and the registry concatenates them across all registered modules.

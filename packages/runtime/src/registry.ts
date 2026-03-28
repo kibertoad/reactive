@@ -4,9 +4,11 @@ import type { StoreApi } from "zustand";
 import type {
   ReactiveModuleDescriptor,
   LazyModuleDescriptor,
+  ReactiveService,
   SlotMap,
   SlotMapOf,
 } from "@tanstack-react-modules/core";
+import { isStoreApi } from "@tanstack-react-modules/core";
 import type {
   RegistryConfig,
   ApplicationManifest,
@@ -149,10 +151,11 @@ export function createRegistry<
   const lazyModules: LazyModuleDescriptor<TSharedDependencies, TSlots>[] = [];
   let resolved = false;
 
-  // Collect all available dependency keys from stores and services
+  // Collect all available dependency keys from all three buckets
   const availableKeys = new Set<string>([
     ...Object.keys(config.stores ?? {}),
     ...Object.keys(config.services ?? {}),
+    ...Object.keys(config.reactiveServices ?? {}),
   ]);
 
   return {
@@ -221,9 +224,10 @@ export function createRegistry<
         zones: mod.zones,
       }));
 
-      // Build stores and services maps for the context
+      // Build stores, services, and reactive services maps for the context
       const stores: Record<string, StoreApi<unknown>> = {};
       const services: Record<string, unknown> = {};
+      const reactiveServices: Record<string, ReactiveService<unknown>> = {};
 
       if (config.stores) {
         for (const [key, store] of Object.entries(config.stores)) {
@@ -235,12 +239,18 @@ export function createRegistry<
           if (service !== undefined) services[key] = service;
         }
       }
+      if (config.reactiveServices) {
+        for (const [key, rs] of Object.entries(config.reactiveServices)) {
+          if (rs) reactiveServices[key] = rs as ReactiveService<unknown>;
+        }
+      }
 
       // Create App component
       const App = createAppComponent({
         router,
         stores,
         services,
+        reactiveServices,
         navigation,
         slots,
         modules: moduleEntries,
@@ -269,6 +279,14 @@ function buildDepsObject<TSharedDependencies extends Record<string, any>>(
   if (config.services) {
     for (const [key, service] of Object.entries(config.services)) {
       if (service !== undefined) deps[key] = service;
+    }
+  }
+  // For reactive services, get current snapshot
+  if (config.reactiveServices) {
+    for (const [key, rs] of Object.entries(config.reactiveServices)) {
+      if (rs) {
+        deps[key] = (rs as ReactiveService<unknown>).getSnapshot();
+      }
     }
   }
 

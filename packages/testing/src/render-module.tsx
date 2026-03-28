@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import type { RenderResult } from "@testing-library/react";
 import { createMemoryHistory, createRouter, createRootRoute } from "@tanstack/react-router";
-import { SharedDependenciesContext } from "@tanstack-react-modules/core";
+import { SharedDependenciesContext, separateDeps } from "@tanstack-react-modules/core";
 import type { ReactiveModuleDescriptor, SlotMap } from "@tanstack-react-modules/core";
 import { SlotsContext } from "@tanstack-react-modules/runtime";
 import { ModulesContext } from "@tanstack-react-modules/runtime";
@@ -15,7 +15,8 @@ export interface RenderModuleOptions<TSharedDependencies extends Record<string, 
 
   /**
    * Shared dependencies to provide.
-   * Keys that are StoreApi instances go into stores, others into services.
+   * StoreApi instances go into stores, ReactiveService instances into reactiveServices,
+   * everything else into services — all auto-detected.
    */
   deps: Partial<{
     [K in keyof TSharedDependencies]: StoreApi<TSharedDependencies[K]> | TSharedDependencies[K];
@@ -29,31 +30,6 @@ export interface RenderModuleOptions<TSharedDependencies extends Record<string, 
    * Only used for component-only modules (no createRoutes).
    */
   props?: Record<string, unknown>;
-}
-
-function isStoreApi(value: unknown): value is StoreApi<unknown> {
-  return (
-    value !== null &&
-    typeof value === "object" &&
-    "getState" in value &&
-    "setState" in value &&
-    "subscribe" in value
-  );
-}
-
-function separateDeps(deps: Record<string, unknown>) {
-  const stores: Record<string, StoreApi<unknown>> = {};
-  const services: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(deps)) {
-    if (isStoreApi(value)) {
-      stores[key] = value;
-    } else {
-      services[key] = value;
-    }
-  }
-
-  return { stores, services };
 }
 
 function buildModuleEntry(module: ReactiveModuleDescriptor<any>): ModuleEntry {
@@ -94,7 +70,9 @@ export async function renderModule<TSharedDependencies extends Record<string, an
   module: ReactiveModuleDescriptor<TSharedDependencies>,
   options: RenderModuleOptions<TSharedDependencies>,
 ): Promise<RenderResult> {
-  const { stores, services } = separateDeps(options.deps as Record<string, unknown>);
+  const { stores, services, reactiveServices } = separateDeps(
+    options.deps as Record<string, unknown>,
+  );
   const moduleEntry = buildModuleEntry(module);
   const slots = options.slots ?? {};
 
@@ -116,7 +94,7 @@ export async function renderModule<TSharedDependencies extends Record<string, an
     await router.load();
 
     return render(
-      <SharedDependenciesContext value={{ stores, services }}>
+      <SharedDependenciesContext value={{ stores, services, reactiveServices }}>
         <SlotsContext value={slots}>
           <ModulesContext value={[moduleEntry]}>
             <RouterProvider router={router} />
@@ -131,7 +109,7 @@ export async function renderModule<TSharedDependencies extends Record<string, an
     const Component = module.component;
 
     return render(
-      <SharedDependenciesContext value={{ stores, services }}>
+      <SharedDependenciesContext value={{ stores, services, reactiveServices }}>
         <SlotsContext value={slots}>
           <ModulesContext value={[moduleEntry]}>
             <Component {...(options.props ?? {})} />

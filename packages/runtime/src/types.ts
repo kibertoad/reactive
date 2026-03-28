@@ -1,23 +1,32 @@
 import type { StoreApi } from "zustand";
 import type { Router } from "@tanstack/react-router";
-import type { NavigationItem, SlotMap, SlotMapOf } from "@tanstack-react-modules/core";
+import type { NavigationItem, ReactiveService, SlotMap, SlotMapOf } from "@tanstack-react-modules/core";
 
 /**
  * Configuration for creating a registry.
- * Separates zustand stores (reactive) from plain services (non-reactive).
+ *
+ * Three dependency buckets:
+ * - **stores** — zustand StoreApi instances (reactive, supports selectors)
+ * - **services** — plain objects (non-reactive, static references)
+ * - **reactiveServices** — external sources with subscribe/getSnapshot (reactive via useSyncExternalStore)
  */
 export interface RegistryConfig<
   TSharedDependencies extends Record<string, any>,
   TSlots extends SlotMapOf<TSlots> = SlotMap,
 > {
-  /** Zustand stores — keys must match TSharedDependencies keys */
+  /** Zustand stores — state you own and mutate */
   stores?: {
     [K in keyof TSharedDependencies]?: StoreApi<TSharedDependencies[K]>;
   };
 
-  /** Plain services (non-reactive) — keys must match TSharedDependencies keys */
+  /** Plain services — static utilities (http client, auth, workspace actions) */
   services?: {
     [K in keyof TSharedDependencies]?: TSharedDependencies[K];
+  };
+
+  /** Reactive external sources — things you subscribe to but don't control (call adapters, presence, websockets) */
+  reactiveServices?: {
+    [K in keyof TSharedDependencies]?: ReactiveService<TSharedDependencies[K]>;
   };
 
   /**

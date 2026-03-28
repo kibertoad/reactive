@@ -194,7 +194,7 @@ export interface AppDependencies {
 }
 
 // These hooks are used by every module
-export const { useStore, useService } = createSharedHooks<AppDependencies>();
+export const { useStore, useService, useReactiveService, useOptional } = createSharedHooks<AppDependencies>();
 ```
 
 **Rules:**

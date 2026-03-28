@@ -1,6 +1,7 @@
-import { createContext, useContext } from "react";
+import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
 import { useStore as useZustandStore } from "zustand";
 import type { StoreApi } from "zustand";
+import type { ReactiveService } from "./types.js";
 
 /**
  * Internal context that holds the resolved shared dependencies.
@@ -10,6 +11,7 @@ import type { StoreApi } from "zustand";
 interface SharedDependenciesContextValue {
   stores: Record<string, StoreApi<unknown>>;
   services: Record<string, unknown>;
+  reactiveServices: Record<string, ReactiveService<unknown>>;
 }
 
 export const SharedDependenciesContext = createContext<SharedDependenciesContextValue | null>(null);
@@ -18,11 +20,27 @@ function useSharedDependencies(): SharedDependenciesContextValue {
   const ctx = useContext(SharedDependenciesContext);
   if (!ctx) {
     throw new Error(
-      "[@tanstack-react-modules/core] useStore/useService must be used within a <ReactiveApp />. " +
+      "[@tanstack-react-modules/core] useStore/useService/useReactiveService must be used within a <ReactiveApp />. " +
         "Make sure your component is rendered inside the App returned by registry.resolve().",
     );
   }
   return ctx;
+}
+
+function allKeys(ctx: SharedDependenciesContextValue): string {
+  const keys = [
+    ...Object.keys(ctx.stores),
+    ...Object.keys(ctx.services),
+    ...Object.keys(ctx.reactiveServices),
+  ];
+  return keys.join(", ") || "(none)";
+}
+
+function suggestHook(key: string, ctx: SharedDependenciesContextValue): string | null {
+  if (ctx.stores[key]) return `Use useStore('${key}') instead.`;
+  if (ctx.services[key]) return `Use useService('${key}') instead.`;
+  if (ctx.reactiveServices[key]) return `Use useReactiveService('${key}') instead.`;
+  return null;
 }
 
 /**
@@ -34,13 +52,13 @@ function useSharedDependencies(): SharedDependenciesContextValue {
  * import { createSharedHooks } from '@tanstack-react-modules/core'
  * import type { AppDependencies } from '@myorg/app-shared'
  *
- * export const { useStore, useService } = createSharedHooks<AppDependencies>()
+ * export const { useStore, useService, useReactiveService, useOptional } = createSharedHooks<AppDependencies>()
  *
  * // In any module component:
- * import { useStore, useService } from '@myorg/app-shared'
- *
- * const user = useStore('auth', (s) => s.user)   // fully typed!
- * const api = useService('api')                    // fully typed!
+ * const user = useStore('auth', (s) => s.user)        // zustand store → reactive
+ * const api = useService('httpClient')                  // plain service → static
+ * const call = useReactiveService('call')               // external source → reactive
+ * const analytics = useOptional('analytics')            // any bucket, null if missing
  */
 export function createSharedHooks<TSharedDependencies extends Record<string, any>>() {
   function useStore<K extends keyof TSharedDependencies & string>(key: K): TSharedDependencies[K];
@@ -52,18 +70,16 @@ export function createSharedHooks<TSharedDependencies extends Record<string, any
     key: K,
     selector?: (state: any) => unknown,
   ): unknown {
-    const { stores, services } = useSharedDependencies();
-    const store = stores[key];
+    const ctx = useSharedDependencies();
+    const store = ctx.stores[key];
     if (!store) {
-      if (services[key]) {
-        throw new Error(
-          `[@tanstack-react-modules/core] "${key}" is registered as a service, not a store. ` +
-            `Use useService('${key}') instead.`,
-        );
+      const hint = suggestHook(key, ctx);
+      if (hint) {
+        throw new Error(`[@tanstack-react-modules/core] "${key}" is not a store. ${hint}`);
       }
       throw new Error(
-        `[@tanstack-react-modules/core] Store "${key}" is not registered. ` +
-          `Available stores: ${Object.keys(stores).join(", ") || "(none)"}`,
+        `[@tanstack-react-modules/core] "${key}" is not registered. ` +
+          `Available dependencies: ${allKeys(ctx)}`,
       );
     }
 
@@ -76,25 +92,65 @@ export function createSharedHooks<TSharedDependencies extends Record<string, any
   function useService<K extends keyof TSharedDependencies & string>(
     key: K,
   ): TSharedDependencies[K] {
-    const { stores, services } = useSharedDependencies();
-    const service = services[key];
+    const ctx = useSharedDependencies();
+    const service = ctx.services[key];
     if (!service) {
-      if (stores[key]) {
-        throw new Error(
-          `[@tanstack-react-modules/core] "${key}" is registered as a store, not a service. ` +
-            `Use useStore('${key}') instead.`,
-        );
+      const hint = suggestHook(key, ctx);
+      if (hint) {
+        throw new Error(`[@tanstack-react-modules/core] "${key}" is not a service. ${hint}`);
       }
       throw new Error(
-        `[@tanstack-react-modules/core] Service "${key}" is not registered. ` +
-          `Available services: ${Object.keys(services).join(", ") || "(none)"}`,
+        `[@tanstack-react-modules/core] "${key}" is not registered. ` +
+          `Available dependencies: ${allKeys(ctx)}`,
       );
     }
     return service as TSharedDependencies[K];
   }
 
   /**
-   * Returns the dependency value if registered (as either a store snapshot or service),
+   * Access a reactive external source (call adapter, presence, websocket).
+   * Uses React's useSyncExternalStore internally — the component re-renders
+   * when the source's snapshot changes.
+   *
+   * @example
+   * const { state, caller } = useReactiveService('call')
+   * const callState = useReactiveService('call', (s) => s.state)
+   */
+  function useReactiveService<K extends keyof TSharedDependencies & string>(
+    key: K,
+  ): TSharedDependencies[K];
+  function useReactiveService<K extends keyof TSharedDependencies & string, U>(
+    key: K,
+    selector: (state: TSharedDependencies[K]) => U,
+  ): U;
+  function useReactiveService<K extends keyof TSharedDependencies & string>(
+    key: K,
+    selector?: (state: any) => unknown,
+  ): unknown {
+    const ctx = useSharedDependencies();
+    const rs = ctx.reactiveServices[key];
+    if (!rs) {
+      const hint = suggestHook(key, ctx);
+      if (hint) {
+        throw new Error(
+          `[@tanstack-react-modules/core] "${key}" is not a reactive service. ${hint}`,
+        );
+      }
+      throw new Error(
+        `[@tanstack-react-modules/core] "${key}" is not registered. ` +
+          `Available dependencies: ${allKeys(ctx)}`,
+      );
+    }
+
+    const getSnapshot = selector
+      ? () => selector(rs.getSnapshot())
+      : rs.getSnapshot;
+
+    return useSyncExternalStore(rs.subscribe, getSnapshot);
+  }
+
+  /**
+   * Returns the dependency value if registered (from any bucket),
    * or null if not registered. Use for optional dependencies that the module can
    * function without.
    *
@@ -105,17 +161,25 @@ export function createSharedHooks<TSharedDependencies extends Record<string, any
   function useOptional<K extends keyof TSharedDependencies & string>(
     key: K,
   ): TSharedDependencies[K] | null {
-    const { stores, services } = useSharedDependencies();
+    const { stores, services, reactiveServices } = useSharedDependencies();
+
     const store = stores[key];
     if (store) {
       return useZustandStore(store) as TSharedDependencies[K];
     }
+
+    const rs = reactiveServices[key];
+    if (rs) {
+      return useSyncExternalStore(rs.subscribe, rs.getSnapshot) as TSharedDependencies[K];
+    }
+
     const service = services[key];
     if (service) {
       return service as TSharedDependencies[K];
     }
+
     return null;
   }
 
-  return { useStore, useService, useOptional };
+  return { useStore, useService, useReactiveService, useOptional };
 }
