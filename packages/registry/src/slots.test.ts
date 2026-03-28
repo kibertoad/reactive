@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { buildSlotsManifest } from './slots.js'
-import type { ReactiveModuleDescriptor, SlotMap } from '@reactive-framework/core'
+import type { ReactiveModuleDescriptor } from '@reactive-framework/core'
 import type { AnyRoute } from '@tanstack/react-router'
 
-interface TestSlots extends SlotMap {
+// Plain interface — no index signature or SlotMap extends needed
+interface TestSlots {
   commands: { id: string; label: string }[]
   badges: { type: string }[]
 }

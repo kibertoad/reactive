@@ -1,11 +1,45 @@
 import type { AnyRoute } from '@tanstack/react-router'
 
 /**
- * Constraint type for slot definitions.
+ * Default type for slot definitions when no explicit type is provided.
  * Every slot value must be a readonly array — modules contribute items
  * and the registry concatenates them across all registered modules.
+ *
+ * When defining your own slot types, use a plain interface:
+ * ```ts
+ * interface AppSlots {
+ *   commands: CommandDefinition[]
+ *   systems: SystemRegistration[]
+ * }
+ * ```
+ * The generic constraint accepts interfaces directly — no index signature needed.
+ * Non-array values (e.g. `commands: string`) produce a compile error.
  */
 export type SlotMap = Record<string, readonly unknown[]>
+
+/**
+ * F-bounded constraint that enforces every value in T is a readonly array,
+ * without requiring an index signature. Use this as a generic bound:
+ *
+ * ```ts
+ * function foo<T extends SlotMapOf<T>>() {}
+ * ```
+ *
+ * This accepts `interface AppSlots { commands: Cmd[] }` (no index signature)
+ * while rejecting `interface Bad { commands: string }` (not an array).
+ */
+export type SlotMapOf<T> = { [K in keyof T]: readonly unknown[] }
+
+/**
+ * Constraint type for zone definitions.
+ * Zone values are React component types — the active route declares which
+ * components should render in named layout regions of the shell.
+ *
+ * Unlike SlotMap (arrays concatenated across all modules), ZoneMap values are
+ * single components contributed by the currently matched route via TanStack
+ * Router's `staticData`.
+ */
+export type ZoneMap = Record<string, React.ComponentType<any> | undefined>
 
 /**
  * Describes a reactive module — a self-contained piece of UI that declares
@@ -14,10 +48,13 @@ export type SlotMap = Record<string, readonly unknown[]>
  *
  * TSharedDependencies is the contract type defined by the host app (e.g. AppDependencies).
  * TSlots is the slot map type defined by the host app (e.g. AppSlots).
+ *
+ * createRoutes is optional — modules without routes are "headless" and
+ * contribute only via slots, navigation, and lifecycle hooks.
  */
 export interface ReactiveModuleDescriptor<
   TSharedDependencies extends Record<string, any> = Record<string, any>,
-  TSlots extends SlotMap = SlotMap,
+  TSlots extends SlotMapOf<TSlots> = SlotMap,
 > {
   /** Unique module identifier, e.g. "billing", "user-profile" */
   readonly id: string
@@ -28,8 +65,11 @@ export interface ReactiveModuleDescriptor<
   /**
    * Receives a parent route and returns the module's route subtree.
    * Uses TanStack Router's createRoute directly.
+   *
+   * Optional — omit for "headless" modules that contribute only
+   * via slots, navigation, and lifecycle hooks without owning routes.
    */
-  readonly createRoutes: (parentRoute: AnyRoute) => AnyRoute
+  readonly createRoutes?: (parentRoute: AnyRoute) => AnyRoute
 
   /** Navigation items this module contributes to the app shell */
   readonly navigation?: readonly NavigationItem[]
@@ -40,6 +80,24 @@ export interface ReactiveModuleDescriptor<
    * contributions from other modules at resolve() time.
    */
   readonly slots?: { readonly [K in keyof TSlots]?: TSlots[K] }
+
+  /**
+   * A React component the shell can render outside of routes — in a tab,
+   * modal, panel, or any other container. Use this for workspace-style apps
+   * where modules are rendered by the shell rather than by the router.
+   *
+   * Route-based modules use createRoutes instead (or both).
+   */
+  readonly component?: React.ComponentType<any>
+
+  /**
+   * Catalog metadata — descriptive information the shell uses for discovery
+   * UIs like directory pages, search, and command palettes.
+   *
+   * The framework collects meta from all modules and exposes it via useModules().
+   * Values are opaque to the framework — the shell defines what keys matter.
+   */
+  readonly meta?: Readonly<Record<string, unknown>>
 
   /** Keys from TSharedDependencies that this module needs */
   readonly requires?: readonly (keyof TSharedDependencies)[]
@@ -87,7 +145,7 @@ export interface ModuleLifecycle<
  */
 export interface LazyModuleDescriptor<
   TSharedDependencies extends Record<string, any> = Record<string, any>,
-  TSlots extends SlotMap = SlotMap,
+  TSlots extends SlotMapOf<TSlots> = SlotMap,
 > {
   /** Unique module identifier */
   readonly id: string

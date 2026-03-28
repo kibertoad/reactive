@@ -8,6 +8,7 @@ export type {
   NavigationGroup,
   NavigationManifest,
   ApplicationManifest,
+  ModuleEntry,
 } from './types.js'
 
 // Navigation
@@ -15,6 +16,12 @@ export { useNavigation } from './navigation-context.js'
 
 // Slots
 export { useSlots, SlotsContext } from './slots-context.js'
+
+// Zones
+export { useZones } from './zones.js'
+
+// Modules
+export { useModules } from './modules-context.js'
 
 // Error boundary (for custom usage)
 export { ModuleErrorBoundary } from './error-boundary.js'

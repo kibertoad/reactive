@@ -13,13 +13,13 @@ interface State {
 }
 
 export class ModuleErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null }
+  override state: State = { hasError: false, error: null }
 
   static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
+  override componentDidCatch(error: Error, info: ErrorInfo) {
     console.error(
       `[@reactive-framework/registry] Module "${this.props.moduleId}" encountered an error:`,
       error,
@@ -27,7 +27,7 @@ export class ModuleErrorBoundary extends Component<Props, State> {
     )
   }
 
-  render() {
+  override render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback

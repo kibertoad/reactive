@@ -1,36 +1,52 @@
 import { RouterProvider } from '@tanstack/react-router'
 import type { Router } from '@tanstack/react-router'
-import { QueryClientProvider } from '@tanstack/react-query'
-import type { QueryClient } from '@tanstack/react-query'
 import type { StoreApi } from 'zustand'
 import { SharedDependenciesContext } from '@reactive-framework/core'
-import type { SlotMap } from '@reactive-framework/core'
 import { NavigationContext } from './navigation-context.js'
 import { SlotsContext } from './slots-context.js'
-import type { NavigationManifest } from './types.js'
+import { ModulesContext } from './modules-context.js'
+import type { NavigationManifest, ModuleEntry } from './types.js'
 
 interface AppProps {
   router: Router<any, any, any>
-  queryClient: QueryClient
   stores: Record<string, StoreApi<unknown>>
   services: Record<string, unknown>
   navigation: NavigationManifest
-  slots: SlotMap
+  slots: object
+  modules: readonly ModuleEntry[]
+  providers?: React.ComponentType<{ children: React.ReactNode }>[]
 }
 
-export function createAppComponent({ router, queryClient, stores, services, navigation, slots }: AppProps) {
+export function createAppComponent({
+  router,
+  stores,
+  services,
+  navigation,
+  slots,
+  modules,
+  providers,
+}: AppProps) {
   function App() {
-    return (
-      <QueryClientProvider client={queryClient}>
-        <SharedDependenciesContext value={{ stores, services }}>
-          <NavigationContext value={navigation}>
-            <SlotsContext value={slots}>
+    let tree: React.ReactNode = (
+      <SharedDependenciesContext value={{ stores, services }}>
+        <NavigationContext value={navigation}>
+          <SlotsContext value={slots}>
+            <ModulesContext value={modules}>
               <RouterProvider router={router} />
-            </SlotsContext>
-          </NavigationContext>
-        </SharedDependenciesContext>
-      </QueryClientProvider>
+            </ModulesContext>
+          </SlotsContext>
+        </NavigationContext>
+      </SharedDependenciesContext>
     )
+
+    // Wrap with user-supplied providers (first element = outermost wrapper)
+    if (providers) {
+      for (const Provider of [...providers].reverse()) {
+        tree = <Provider>{tree}</Provider>
+      }
+    }
+
+    return tree
   }
 
   App.displayName = 'ReactiveApp'

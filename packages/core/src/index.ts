@@ -5,6 +5,8 @@ export type {
   NavigationItem,
   ModuleLifecycle,
   SlotMap,
+  SlotMapOf,
+  ZoneMap,
 } from './types.js'
 
 // Module definition
@@ -16,3 +18,6 @@ export {
   createSharedHooks,
 } from './context.js'
 
+// Scoped stores
+export { createScopedStore } from './scoped-store.js'
+export type { ScopedStore } from './scoped-store.js'

@@ -7,7 +7,7 @@ import type { ReactiveModuleDescriptor, SlotMap } from '@reactive-framework/core
  * When defaults are provided, every key in defaults is guaranteed to exist
  * in the result — even if no module contributes to it.
  */
-export function buildSlotsManifest<TSlots extends SlotMap>(
+export function buildSlotsManifest<TSlots extends { [K in keyof TSlots]: readonly unknown[] }>(
   modules: readonly ReactiveModuleDescriptor<any, TSlots>[],
   defaults?: Partial<{ [K in keyof TSlots]: TSlots[K] }>,
 ): TSlots {

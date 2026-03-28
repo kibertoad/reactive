@@ -11,6 +11,9 @@
     }
   },
   "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "vite build",
     "dev": "vite build --watch"
@@ -20,7 +23,6 @@
     "@reactive-framework/registry": "workspace:*"
   },
   "peerDependencies": {
-    "@tanstack/react-query": "^5.95.0",
     "@tanstack/react-router": "^1.120.0",
     "@testing-library/react": "^16.0.0",
     "react": "^19.0.0",
@@ -28,7 +30,6 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@tanstack/react-query": "^5.95.0",
     "@tanstack/react-router": "^1.120.0",
     "@testing-library/react": "^16.0.0",
     "react": "^19.0.0",

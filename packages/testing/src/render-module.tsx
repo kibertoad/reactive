@@ -73,6 +73,12 @@ export async function renderModule<
 
   // Build route tree for this module
   const rootRoute = createRootRoute({})
+  if (!module.createRoutes) {
+    throw new Error(
+      `[@reactive-framework/testing] Module "${module.id}" has no createRoutes. ` +
+        'renderModule only works with modules that define routes.',
+    )
+  }
   const moduleRoutes = module.createRoutes(rootRoute)
   const routeTree = rootRoute.addChildren([moduleRoutes])
 

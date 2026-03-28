@@ -1,7 +1,6 @@
 import { createContext, useContext } from 'react'
-import type { SlotMap } from '@reactive-framework/core'
 
-export const SlotsContext = createContext<SlotMap | null>(null)
+export const SlotsContext = createContext<object | null>(null)
 
 /**
  * Access the collected slot contributions from all registered modules.
@@ -11,7 +10,7 @@ export const SlotsContext = createContext<SlotMap | null>(null)
  * const slots = useSlots<AppSlots>()
  * const commands = slots.commands // CommandDefinition[] from all modules
  */
-export function useSlots<TSlots extends SlotMap>(): TSlots {
+export function useSlots<TSlots extends { [K in keyof TSlots]: readonly unknown[] }>(): TSlots {
   const slots = useContext(SlotsContext)
   if (!slots) {
     throw new Error(

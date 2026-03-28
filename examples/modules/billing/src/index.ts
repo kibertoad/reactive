@@ -6,6 +6,13 @@ export default defineModule<AppDependencies, AppSlots>({
   id: 'billing',
   version: '0.1.0',
 
+  meta: {
+    name: 'Billing',
+    description: 'Manage invoices and billing',
+    icon: 'credit-card',
+    category: 'finance',
+  },
+
   createRoutes: (parentRoute) => {
     const billingRoot = createRoute({
       getParentRoute: () => parentRoute,

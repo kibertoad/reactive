@@ -34,6 +34,24 @@ export interface AppDependencies {
   httpClient: Wretch
 }
 
+// ---- Zones (per-route UI regions) ----
+
+import type { ComponentType } from 'react'
+
+export interface AppZones {
+  /** Component rendered in the header actions area */
+  headerActions?: ComponentType
+  /** Component rendered in a contextual detail panel alongside the main content */
+  detailPanel?: ComponentType
+}
+
+// Type-safe staticData: augment TanStack Router so createRoute({ staticData })
+// is checked against AppZones. Typos and wrong component types become compile errors.
+// Place this in app-shared (or a global .d.ts in the shell) so all modules get it.
+declare module '@tanstack/router-core' {
+  interface StaticDataRouteOption extends AppZones {}
+}
+
 // ---- Slots ----
 
 export interface CommandDefinition {

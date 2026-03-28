@@ -16,8 +16,11 @@ Plug-and-play modular framework for React. Build frontend features as independen
 - [The Shell (Host App)](#the-shell-host-app)
 - [Navigation](#navigation)
 - [Slots](#slots)
+- [Zones](#zones)
+- [Module Catalog](#module-catalog)
 - [Shell Patterns](docs/shell-patterns.md) (separate guide)
 - [Cross-Module Communication](#cross-module-communication)
+- [Scoped Stores](#scoped-stores)
 - [React Compiler](#react-compiler)
 - [Testing Modules](#testing-modules)
 - [Lazy Loading Modules](#lazy-loading-modules)
@@ -56,10 +59,11 @@ Plug-and-play modular framework for React. Build frontend features as independen
 │  │ Billing      │  │ Users        │  │ Settings     │  │
 │  │ Module       │  │ Module       │  │ Module       │  │
 │  │              │  │              │  │              │  │
-│  │ Routes       │  │ Routes       │  │ Routes       │  │
-│  │ Pages        │  │ Pages        │  │ Pages        │  │
+│  │ Routes       │  │ Routes       │  │ Component    │  │
+│  │ Pages        │  │ Pages        │  │ Meta         │  │
 │  │ Navigation   │  │ Navigation   │  │ Navigation   │  │
 │  │ Slots        │  │ Slots        │  │ Slots        │  │
+│  │ Zones        │  │ Zones        │  │              │  │
 │  └──────────────┘  └──────────────┘  └──────────────┘  │
 │                                                         │
 │  ┌────────────────────────────────────────────────────┐ │
@@ -276,7 +280,9 @@ export default defineModule<AppDependencies>({
 |---|---|---|
 | `id` | Yes | Unique string identifier. Must be unique across all registered modules. |
 | `version` | Yes | SemVer version string. |
-| `createRoutes` | Yes | Receives the root route as parent, returns a TanStack Router route subtree. Use `lazyRouteComponent()` for code splitting. |
+| `createRoutes` | No | Receives the root route as parent, returns a TanStack Router route subtree. Use `lazyRouteComponent()` for code splitting. |
+| `component` | No | A React component the shell can render outside of routes — in a tab, modal, or panel. Use for workspace apps where the shell orchestrates rendering. |
+| `meta` | No | Catalog metadata (`Record<string, unknown>`) — name, description, icon, category, etc. The shell uses this for discovery UIs. See [Module Catalog](#module-catalog). |
 | `navigation` | No | Array of `NavigationItem` entries contributed to the shell's sidebar/nav. |
 | `slots` | No | Typed slot contributions (e.g. commands, tab types). See [Slots](#slots). |
 | `requires` | No | Array of `AppDependencies` keys this module needs. Validated at registry resolution. |
@@ -783,7 +789,207 @@ Lazy modules (registered via `registerLazy()`) cannot contribute slots at regist
 | Runtime state that changes over time (active tab, notifications, user preferences) | **Shared Zustand stores** |
 | Server data (API responses, cached queries) | **React Query** |
 
-For a detailed guide on building complex shell applications with slots, see [Shell Patterns](docs/shell-patterns.md).
+For a detailed guide on building complex shell applications with slots and zones, see [Shell Patterns](docs/shell-patterns.md).
+
+---
+
+## Zones
+
+Zones let the **currently active route** contribute UI components to named layout regions in the shell — a detail panel, header actions, a contextual sidebar. Unlike slots (which aggregate data from *all* modules at registration time), zones are per-route and change as the user navigates.
+
+Zones are built on TanStack Router's `staticData` — no custom context, no portals, no event bus.
+
+### Slots vs Zones
+
+| | Slots | Zones |
+|---|---|---|
+| **Source** | All registered modules | The currently matched route |
+| **When resolved** | Once at `resolve()` time | On every navigation |
+| **Value type** | Arrays (concatenated) | Single React component |
+| **Use case** | Commands, tab types, badges | Detail panel, header actions, sidebar |
+| **Hook** | `useSlots<AppSlots>()` | `useZones<AppZones>()` |
+
+### Defining zones in app-shared
+
+```typescript
+// app-shared/src/index.ts
+import type { ComponentType } from 'react'
+
+export interface AppZones {
+  headerActions?: ComponentType
+  detailPanel?: ComponentType
+}
+```
+
+Zone values are optional — not every route populates every zone.
+
+### Setting zones on a route
+
+Modules set zones via TanStack Router's `staticData` on individual routes. Different routes within the same module can contribute different zone components:
+
+```typescript
+import { UserDetailActions } from './components/UserDetailActions.js'
+import { UserDetailPanel } from './components/UserDetailPanel.js'
+
+const userDetail = createRoute({
+  getParentRoute: () => usersRoot,
+  path: '$userId',
+  component: UserDetailPage,
+  staticData: {
+    headerActions: UserDetailActions,
+    detailPanel: UserDetailPanel,
+  },
+})
+```
+
+Routes that don't set `staticData` simply contribute no zones — the shell renders nothing in those regions.
+
+### Reading zones in the shell
+
+```typescript
+import { useZones } from '@reactive-framework/registry'
+import type { AppZones } from '@myorg/app-shared'
+
+function Layout() {
+  const zones = useZones<AppZones>()
+  const HeaderActions = zones.headerActions
+  const DetailPanel = zones.detailPanel
+
+  return (
+    <div className="layout">
+      <header>
+        {HeaderActions && <HeaderActions />}
+      </header>
+      <div style={{ display: 'flex' }}>
+        <main><Outlet /></main>
+        {DetailPanel && <DetailPanel />}
+      </div>
+    </div>
+  )
+}
+```
+
+### How it works
+
+1. `useZones()` calls TanStack Router's `useMatches()` with a `select` function.
+2. The select function walks matched routes from root to leaf, merging `staticData` entries.
+3. **Deepest match wins** — a child route can override a parent route's zone. A parent can set a default sidebar, and a specific detail page can replace it.
+4. The shell conditionally renders zone components. If a zone is `undefined`, nothing renders.
+
+### Performance
+
+- **No extra re-renders.** `staticData` is defined at route creation time — its reference is permanently stable. `useMatches` with `select` only triggers re-renders when the selected value actually changes.
+- **No context cascade.** Zones flow through TanStack Router's existing match data, not a custom React context.
+- **No mount ordering issues.** Unlike portal-based approaches, zone components are rendered directly by the shell in its own React tree. They have normal access to all contexts (shared dependencies, router, React Query).
+
+### Type-safe staticData
+
+By default, TanStack Router's `staticData` accepts any object. To get compile-time checks on zone keys and component types, augment `StaticDataRouteOption` in app-shared:
+
+```typescript
+// app-shared/src/index.ts
+export interface AppZones {
+  headerActions?: ComponentType
+  detailPanel?: ComponentType
+}
+
+declare module '@tanstack/router-core' {
+  interface StaticDataRouteOption extends AppZones {}
+}
+```
+
+With this augmentation, every `createRoute({ staticData: ... })` call across all modules is checked against `AppZones`. A typo like `detialPanel` or passing a string instead of a component becomes a compile error. This works because `StaticDataRouteOption` is an empty interface designed for declaration merging — the same pattern TanStack Router uses for `Register`.
+
+Add `@tanstack/router-core` as a peer dependency of app-shared so the augmentation resolves.
+
+### Zones are not on the module descriptor
+
+Zones live on routes, not on the module descriptor. This is intentional — a module with 5 routes might have different zone content for each one. The user detail page shows a user sidebar; the user list page shows nothing. This per-route granularity wouldn't work at the module level.
+
+---
+
+## Module Catalog
+
+Modules can describe themselves with `meta` — a plain object with catalog metadata like name, description, icon, and category. The shell uses this for discovery UIs: directory pages, search, card grids.
+
+Modules can also export a `component` — a React component the shell renders outside of routes, in tabs, panels, or modals. This is how workspace-style apps render modules without tying them to URL routes.
+
+### Declaring meta and component
+
+```typescript
+import { defineModule } from '@reactive-framework/core'
+import { lazy } from 'react'
+
+export default defineModule<AppDependencies>({
+  id: 'dd-setup',
+  version: '0.1.0',
+  component: lazy(() => import('./DDSetupJourney.js')),
+  meta: {
+    name: 'Set up Direct Debit',
+    description: 'Configure a new Direct Debit mandate',
+    icon: 'credit-card',
+    category: 'payments',
+    estimatedTime: '2-3 mins',
+  },
+  requires: ['auth', 'httpClient'],
+})
+```
+
+`meta` is `Record<string, unknown>` — the framework stores it but doesn't interpret it. Your app-shared package can define a typed interface for what keys the shell expects, then cast in the shell.
+
+### Reading modules in the shell
+
+```typescript
+import { useModules } from '@reactive-framework/registry'
+
+function DirectoryPage() {
+  const modules = useModules()
+  const payments = modules.filter((m) => m.meta?.category === 'payments')
+
+  return (
+    <div>
+      {payments.map((mod) => (
+        <Card key={mod.id}>
+          <h3>{mod.meta?.name as string}</h3>
+          <p>{mod.meta?.description as string}</p>
+          <button onClick={() => openInTab(mod)}>Start</button>
+        </Card>
+      ))}
+    </div>
+  )
+}
+```
+
+### Rendering a module in a tab
+
+```typescript
+function WorkspaceTab({ moduleId, context }: { moduleId: string; context: unknown }) {
+  const modules = useModules()
+  const mod = modules.find((m) => m.id === moduleId)
+
+  if (!mod?.component) return <p>Module not found</p>
+  const Component = mod.component
+  return <Component {...context} />
+}
+```
+
+### When to use meta vs navigation vs slots
+
+| Data | Mechanism | Why |
+|---|---|---|
+| Sidebar links | `navigation` | Framework builds NavigationManifest with grouping/sorting |
+| Commands, tab types, badges | `slots` | Aggregated arrays from all modules |
+| Module identity for directory/catalog | `meta` | Per-module descriptive data for discovery UIs |
+| Route-specific panel/header content | `staticData` (zones) | Changes per route within a module |
+
+### Accessing modules outside the manifest
+
+The `modules` array is also available on the `ApplicationManifest` returned by `registry.resolve()`:
+
+```typescript
+const { App, modules } = registry.resolve({ ... })
+// modules: ModuleEntry[] — same data useModules() returns
+```
 
 ---
 
@@ -844,6 +1050,112 @@ function UserDetail() {
 |---|---|---|
 | Zustand store | Client state changes that affect UI across modules | Auth state, feature flags, UI preferences |
 | React Query invalidation | Server data changes that other modules also display | User deactivated → billing data needs refresh |
+
+---
+
+## Scoped Stores
+
+`createScopedStore` creates a `Map<string, StoreApi<T>>` with lazy initialization — each scope key gets its own independent Zustand store, created on first access.
+
+Use this for **per-entity state**: per-interaction tabs, per-conversation messages, per-workspace scratchpads — anywhere you have a dynamic collection of entities that each need independent state.
+
+### The problem
+
+Without scoped stores, per-entity state means a `Record<string, T>` inside a single store, with every operation manually scoping to the right key:
+
+```typescript
+// Before: manual scoping — repeated for every entity concern
+const useShellStore = create((set, get) => ({
+  tabsByInteraction: {} as Record<string, TabState>,
+
+  openTab: (interactionId: string, tab: Tab) =>
+    set((state) => {
+      const current = state.tabsByInteraction[interactionId] ?? defaultTabState()
+      return {
+        tabsByInteraction: {
+          ...state.tabsByInteraction,
+          [interactionId]: { ...current, tabs: [...current.tabs, tab] },
+        },
+      }
+    }),
+
+  // ... 30 more lines of the same pattern for closeTab, switchTab, etc.
+}))
+```
+
+This boilerplate multiplies with every scoped concern — tabs, scratchpad, journey state, etc.
+
+### The solution
+
+```typescript
+import { createScopedStore } from '@reactive-framework/core'
+
+// Define once — each interaction gets its own independent store
+const tabState = createScopedStore<TabState>(() => ({
+  tabs: [createDirectoryTab()],
+  activeTabId: 'directory',
+}))
+```
+
+### In React components
+
+```typescript
+function Workspace({ interactionId }: { interactionId: string }) {
+  // Subscribe to this interaction's tab state — re-renders only when it changes
+  const { tabs, activeTabId } = tabState.useScoped(interactionId)
+
+  // With selector — re-renders only when tabs change, not activeTabId
+  const tabs = tabState.useScoped(interactionId, (s) => s.tabs)
+
+  return <TabStrip tabs={tabs} activeTabId={activeTabId} />
+}
+```
+
+### Imperative access (actions, event handlers, outside React)
+
+```typescript
+function openTab(interactionId: string, tab: Tab) {
+  const store = tabState.getOrCreate(interactionId)
+  store.setState((prev) => ({
+    tabs: [...prev.tabs, tab],
+    activeTabId: tab.id,
+  }))
+}
+
+function closeTab(interactionId: string, tabId: string) {
+  const store = tabState.getOrCreate(interactionId)
+  store.setState((prev) => {
+    const newTabs = prev.tabs.filter((t) => t.id !== tabId)
+    return {
+      tabs: newTabs,
+      activeTabId: prev.activeTabId === tabId ? newTabs[0]?.id ?? 'directory' : prev.activeTabId,
+    }
+  })
+}
+
+// Cleanup when an interaction ends
+tabState.remove(interactionId)
+```
+
+### API
+
+```typescript
+const scoped = createScopedStore<TState>(initializer: () => TState)
+
+scoped.getOrCreate(scopeId)        // StoreApi<TState> — lazy create on first access
+scoped.has(scopeId)                // boolean
+scoped.remove(scopeId)             // dispose a scope
+scoped.clear()                     // dispose all scopes
+scoped.useScoped(scopeId)          // React hook — full state
+scoped.useScoped(scopeId, selector) // React hook — selected slice
+```
+
+### When to use scoped stores vs regular stores
+
+| Pattern | Use when |
+|---|---|
+| Regular Zustand store (`createStore`) | Singleton state shared across the app (auth, config, UI panels) |
+| Scoped store (`createScopedStore`) | Per-entity state with dynamic keys (per-interaction, per-tab, per-user) |
 
 ---
 
@@ -1120,6 +1432,7 @@ npx playwright test
 | `NavigationItem` | Type | Navigation entry shape. `icon` accepts `string \| React.ComponentType`. |
 | `ModuleLifecycle<T>` | Type | Lifecycle hooks shape. |
 | `SlotMap` | Type | Constraint type for slot definitions: `Record<string, readonly unknown[]>`. |
+| `ZoneMap` | Type | Constraint type for zone definitions: `Record<string, ComponentType \| undefined>`. |
 
 ### @reactive-framework/registry
 
@@ -1128,11 +1441,14 @@ npx playwright test
 | `createRegistry<T, S>(config)` | Function | Creates a module registry. `T` = shared deps, `S` = slots. Config has `{ stores, services }`. |
 | `useNavigation()` | Hook | Access the navigation manifest from any component inside `<App />`. |
 | `useSlots<S>()` | Hook | Access collected slot contributions from all modules. |
+| `useZones<Z>()` | Hook | Access zone components from the currently matched route's `staticData`. |
+| `useModules()` | Hook | Access registered module summaries (id, version, meta, component). |
 | `SlotsContext` | Context | React context holding the slots manifest. Used internally. |
 | `ModuleErrorBoundary` | Component | Error boundary that isolates module-level crashes. |
 | `ReactiveRegistry<T, S>` | Type | Registry interface with `register()`, `registerLazy()`, `resolve()`. |
 | `RegistryConfig<T>` | Type | Registry configuration shape. |
-| `ApplicationManifest<T, S>` | Type | Resolved app shape: `{ App, router, queryClient, navigation, slots }`. |
+| `ApplicationManifest<T, S>` | Type | Resolved app shape: `{ App, router, navigation, slots, modules }`. |
+| `ModuleEntry` | Type | `{ id, version, meta?, component? }`. |
 | `NavigationManifest` | Type | `{ items, groups, ungrouped }`. |
 | `NavigationGroup` | Type | `{ group, items }`. |
 | `ResolveOptions` | Type | `{ rootComponent, indexComponent, notFoundComponent }`. |

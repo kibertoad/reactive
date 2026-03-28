@@ -33,6 +33,9 @@ importers:
         specifier: ^3.25.0
         version: 3.25.76
     devDependencies:
+      '@tanstack/router-core':
+        specifier: ^1.120.0
+        version: 1.168.6
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.14
@@ -230,9 +233,6 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
-      '@tanstack/react-query':
-        specifier: ^5.95.0
-        version: 5.95.2(react@19.2.4)
       '@tanstack/react-router':
         specifier: ^1.120.0
         version: 1.168.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -270,9 +270,6 @@ importers:
         specifier: workspace:*
         version: link:../registry
     devDependencies:
-      '@tanstack/react-query':
-        specifier: ^5.95.0
-        version: 5.95.2(react@19.2.4)
       '@tanstack/react-router':
         specifier: ^1.120.0
         version: 1.168.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

@@ -1,5 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
+import { useZones } from '@reactive-framework/registry'
 import { useStore } from '@example/app-shared'
+import type { AppZones } from '@example/app-shared'
 import { Sidebar } from './Sidebar.js'
 import { CommandPalette } from './CommandPalette.js'
 
@@ -8,6 +10,10 @@ export function Layout() {
   const isAuthenticated = useStore('auth', (s) => s.isAuthenticated)
   const login = useStore('auth', (s) => s.login)
   const logout = useStore('auth', (s) => s.logout)
+
+  const zones = useZones<AppZones>()
+  const HeaderActions = zones.headerActions
+  const DetailPanel = zones.detailPanel
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh' }}>
@@ -21,6 +27,8 @@ export function Layout() {
           alignItems: 'center',
           gap: '1rem',
         }}>
+          {HeaderActions && <HeaderActions />}
+          <div style={{ flex: 1 }} />
           <CommandPalette />
           {isAuthenticated ? (
             <>
@@ -54,9 +62,12 @@ export function Layout() {
             </button>
           )}
         </header>
-        <main style={{ flex: 1, padding: '1.5rem' }}>
-          <Outlet />
-        </main>
+        <div style={{ flex: 1, display: 'flex' }}>
+          <main style={{ flex: 1, padding: '1.5rem' }}>
+            <Outlet />
+          </main>
+          {DetailPanel && <DetailPanel />}
+        </div>
       </div>
     </div>
   )

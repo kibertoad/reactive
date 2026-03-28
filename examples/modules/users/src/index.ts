@@ -1,10 +1,19 @@
 import { defineModule } from '@reactive-framework/core'
 import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
 import type { AppDependencies, AppSlots } from '@example/app-shared'
+import { UserDetailActions } from './components/UserDetailActions.js'
+import { UserDetailPanel } from './components/UserDetailPanel.js'
 
 export default defineModule<AppDependencies, AppSlots>({
   id: 'users',
   version: '0.1.0',
+
+  meta: {
+    name: 'Users',
+    description: 'User management and profiles',
+    icon: 'users',
+    category: 'admin',
+  },
 
   createRoutes: (parentRoute) => {
     const usersRoot = createRoute({
@@ -22,6 +31,10 @@ export default defineModule<AppDependencies, AppSlots>({
       getParentRoute: () => usersRoot,
       path: '$userId',
       component: lazyRouteComponent(() => import('./pages/UserDetail.js')),
+      staticData: {
+        headerActions: UserDetailActions,
+        detailPanel: UserDetailPanel,
+      },
     })
 
     return usersRoot.addChildren([userList, userDetail])
