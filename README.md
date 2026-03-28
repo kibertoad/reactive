@@ -2,7 +2,7 @@
 
 Plug-and-play modular framework for React. Build frontend features as independent npm packages, compose them into a running application via a typed module registry.
 
-**Stack:** React 19 (React Compiler) + TanStack Router + Vite 8 + Zustand + React Query + Lokalise HTTP Client
+**Stack:** React 19 (React Compiler) + TanStack Router + Vite 8 + Zustand
 
 ## Table of Contents
 
@@ -18,8 +18,8 @@ Plug-and-play modular framework for React. Build frontend features as independen
 - [Slots](#slots)
 - [Zones](#zones)
 - [Module Catalog](#module-catalog)
-- [Shell Patterns](docs/shell-patterns.md) — layout grids, command palettes, auth guards, cross-store coordination
-- [Workspace Patterns](docs/workspace-patterns.md) — tabbed workspaces, component-only modules, descriptor zones
+- [Shell Patterns](docs/shell-patterns.md) - layout grids, command palettes, auth guards, cross-store coordination
+- [Workspace Patterns](docs/workspace-patterns.md) - tabbed workspaces, component-only modules, descriptor zones
 - [Cross-Module Communication](#cross-module-communication)
 - [Scoped Stores](#scoped-stores)
 - [React Compiler](#react-compiler)
@@ -43,7 +43,7 @@ Plug-and-play modular framework for React. Build frontend features as independen
 │  - Provides root layout                                 │
 │                                                         │
 │  ┌────────────────────────────────────────────────────┐ │
-│  │  @tanstack-react-modules/runtime                                │ │
+│  │  @tanstack-react-modules/runtime                   │ │
 │  │  - Validates dependencies                          │ │
 │  │  - Composes TanStack Router route tree             │ │
 │  │  - Builds navigation manifest                      │ │
@@ -357,7 +357,7 @@ export default function InvoiceList() {
 
 ## Defining API Contracts
 
-API contracts use `@lokalise/api-contracts` with zod schemas. Contracts are typically **owned and published by the backend team** as an npm package (e.g., `@myorg/billing-api-contracts`). The frontend consumes them — either by importing the backend's package directly, or by re-exporting contracts through the app-shared package for convenience.
+API contracts use `@lokalise/api-contracts` with zod schemas. Contracts are typically **owned and published by the backend team** as an npm package (e.g., `@myorg/billing-api-contracts`).
 
 The examples below show contracts defined locally in the app-shared package for illustration.
 
