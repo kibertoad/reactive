@@ -10,6 +10,8 @@ metadata:
 
 A Reactive module is an npm package that exports a `ReactiveModuleDescriptor` via `defineModule()`. It declares its own routes (TanStack Router), navigation items, and shared dependency requirements.
 
+> **Prefer the CLI:** `reactive create module <name>` automates all steps below including shell wiring. Use manual creation only when the CLI doesn't fit your needs.
+
 ## Step 1: Create the directory structure
 
 ```
@@ -38,7 +40,7 @@ examples/modules/<module-name>/
     }
   },
   "dependencies": {
-    "@reactive/core": "workspace:*",
+    "@reactive/core": "^0.1.0",
     "@example/app-shared": "workspace:*",
     "@lokalise/frontend-http-client": "^7.0.0"
   },
@@ -146,3 +148,5 @@ Add the workspace dependency to the shell's `package.json`:
 ```
 
 Run `pnpm install` to link the new package.
+
+Or use `reactive create module <name>` which handles registration automatically.

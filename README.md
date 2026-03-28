@@ -20,6 +20,8 @@ Plug-and-play modular framework for React. Build frontend features as independen
 - [Testing Modules](#testing-modules)
 - [Lazy Loading Modules](#lazy-loading-modules)
 - [Project Structure](#project-structure)
+- [CLI Reference](#cli-reference)
+- [E2E Testing](#e2e-testing)
 - [API Reference](#api-reference)
 
 ---
@@ -77,10 +79,34 @@ Plug-and-play modular framework for React. Build frontend features as independen
 
 ### Prerequisites
 
-- Node.js 20.19+ or 22.12+
+- Node.js 24+
 - pnpm
 
-### Install and run
+### Start a new project
+
+The CLI scaffolds a complete project with shell, app-shared, and a first module:
+
+```bash
+npx @reactive/cli init my-app --scope @myorg --module dashboard
+cd my-app
+pnpm install
+pnpm dev
+```
+
+This creates:
+
+```
+my-app/
+├── app-shared/          # AppDependencies, typed hooks, API contracts
+├── shell/               # Vite host app with React Compiler
+├── modules/
+│   └── dashboard/       # First module with two routes
+├── package.json
+├── pnpm-workspace.yaml
+└── tsconfig.base.json
+```
+
+### Install and run (framework development)
 
 ```bash
 pnpm install
@@ -172,6 +198,8 @@ export const { useStore, useService } = createSharedHooks<AppDependencies>()
 ---
 
 ## Creating a Module
+
+> **CLI shortcut:** `npx @reactive/cli create module billing` scaffolds the module, wires it into the shell's `main.tsx` and `package.json`, then run `pnpm install`.
 
 A module is an npm package that exports a `ReactiveModuleDescriptor` via `defineModule()`.
 
@@ -299,7 +327,7 @@ export default function InvoiceList() {
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "dependencies": {
-    "@reactive/core": "workspace:*",
+    "@reactive/core": "^0.1.0",
     "@example/app-shared": "workspace:*",
     "@lokalise/frontend-http-client": "^7.0.0"
   },
@@ -835,6 +863,7 @@ The module's code is only loaded when the user first navigates to `/admin/*`.
 ```
 reactive/
 ├── packages/
+│   ├── cli/                     # @reactive/cli — project scaffolding CLI
 │   ├── core/                    # @reactive/core — module types, hooks, defineModule()
 │   ├── registry/                # @reactive/registry — composition, validation, providers
 │   └── testing/                 # @reactive/testing — test harness
@@ -853,18 +882,120 @@ reactive/
 
 | Package | Purpose | Size |
 |---|---|---|
-| `@reactive/core` | Module types, `defineModule()`, `createSharedHooks()` | ~1.2 KB |
-| `@reactive/registry` | `createRegistry()`, route composition, validation, navigation manifest, `useNavigation()` | ~13.6 KB |
-| `@reactive/testing` | `renderModule()`, `createMockStore()` | ~8.9 KB |
+| `@reactive/core` | Module types, `defineModule()`, `createSharedHooks()` | ~1 KB |
+| `@reactive/registry` | `createRegistry()`, route composition, validation, navigation manifest, `useNavigation()` | ~5.6 KB |
+| `@reactive/testing` | `renderModule()`, `createMockStore()` | ~1 KB |
+| `@reactive/cli` | `reactive init`, `reactive create module`, `reactive create store` | N/A (Node CLI) |
 
 ### Building packages
 
-All packages use Vite 8 library mode (no tsup/esbuild):
+Framework packages use Vite 8 library mode (ESM only):
 
 ```bash
 pnpm build                    # Build all packages + shell
 pnpm --filter @reactive/core build   # Build a single package
 pnpm --filter shell dev       # Run example shell in dev mode
+```
+
+---
+
+## CLI Reference
+
+`@reactive/cli` provides commands for scaffolding projects, modules, and stores. All commands support both interactive (prompts) and non-interactive (flags) modes.
+
+### reactive init
+
+Create a new project with shell, app-shared, and a first module.
+
+```bash
+# Interactive
+reactive init my-app
+
+# Non-interactive (CI-friendly)
+reactive init my-app --scope @myorg --module dashboard
+```
+
+| Flag | Description |
+|---|---|
+| `--scope` | npm scope for all packages (e.g. `@myorg`) |
+| `--module` | Name of the first module to create |
+
+### reactive create module
+
+Add a new module to an existing project. Run from anywhere inside the project.
+
+```bash
+# Interactive
+reactive create module
+
+# Non-interactive
+reactive create module billing --route billing --nav-group finance
+```
+
+| Flag | Description |
+|---|---|
+| `--route` | Route path (defaults to module name) |
+| `--nav-group` | Navigation group for sidebar grouping |
+
+This command:
+1. Scaffolds `modules/<name>/` with descriptor, two page components, package.json, tsconfig
+2. Adds the module dependency to `shell/package.json`
+3. Adds the import and `registry.register()` call to `shell/src/main.tsx`
+
+### reactive create store
+
+Add a new Zustand store and wire it into AppDependencies.
+
+```bash
+reactive create store notifications
+```
+
+This command:
+1. Creates `shell/src/stores/<name>.ts` with a Zustand store skeleton
+2. Adds the store interface to `AppDependencies` in `app-shared/src/index.ts`
+3. Wires the store into `createRegistry()` in `shell/src/main.tsx`
+
+---
+
+## E2E Testing
+
+Projects scaffolded by the CLI are ready for Playwright testing out of the box. Each module generates page components with semantic HTML (headings, links, buttons) that work naturally with Playwright's recommended locators.
+
+### Setup
+
+```bash
+pnpm add -D @playwright/test
+npx playwright install chromium
+```
+
+### Writing tests
+
+Use Playwright's semantic locators (`getByRole`, `getByText`) instead of `data-testid` attributes:
+
+```typescript
+import { test, expect } from '@playwright/test'
+
+test('navigates to billing module', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('link', { name: 'Billing' }).click()
+  await expect(page.getByRole('heading', { name: 'Billing' })).toBeVisible()
+})
+
+test('login flow works', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /login/i }).click()
+  await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible()
+})
+```
+
+### Running
+
+```bash
+# Start dev server in one terminal
+pnpm dev
+
+# Run tests in another
+npx playwright test
 ```
 
 ---

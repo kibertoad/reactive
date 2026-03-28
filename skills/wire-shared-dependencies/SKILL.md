@@ -13,12 +13,14 @@ Shared dependencies are how modules access cross-cutting concerns (auth, config,
 - **Zustand stores** — reactive state that components subscribe to.
 - **Plain services** — stable instances (HTTP clients, loggers) that don't trigger re-renders.
 
+> **CLI shortcut for stores:** `reactive create store <name>` automates steps 1-4 for Zustand stores. Use manual wiring for plain services or when the CLI doesn't fit.
+
 ## Adding a Zustand store
 
 ### Step 1: Define the store type in the contract
 
 ```typescript
-// examples/app-shared/src/index.ts
+// app-shared/src/index.ts
 
 export interface NotificationStore {
   notifications: Notification[]
@@ -44,7 +46,7 @@ The `useStore` and `useService` hooks are already typed against `AppDependencies
 ### Step 3: Create the store implementation in the shell
 
 ```typescript
-// examples/shell/src/stores/notifications.ts
+// shell/src/stores/notifications.ts
 import { createStore } from 'zustand/vanilla'
 import type { NotificationStore } from '@example/app-shared'
 
@@ -61,7 +63,7 @@ export const notificationStore = createStore<NotificationStore>((set) => ({
 ### Step 4: Register in the registry
 
 ```typescript
-// examples/shell/src/main.tsx
+// shell/src/main.tsx
 import { notificationStore } from './stores/notifications.js'
 
 const registry = createRegistry<AppDependencies>({
@@ -110,7 +112,7 @@ export interface AppDependencies {
 ### Step 3: Create the implementation in the shell
 
 ```typescript
-// examples/shell/src/services/analytics.ts
+// shell/src/services/analytics.ts
 import type { AnalyticsService } from '@example/app-shared'
 
 export const analytics: AnalyticsService = {

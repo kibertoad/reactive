@@ -10,6 +10,8 @@ metadata:
 
 After creating a module, it must be registered in the shell (host app) to appear in the running application.
 
+> **Note:** `reactive create module` handles registration automatically. These manual steps are only needed when registering a module that was created without the CLI.
+
 ## Step 1: Add workspace dependency
 
 In `examples/shell/package.json`, add the module to `dependencies`:

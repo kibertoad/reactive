@@ -11,10 +11,11 @@
     "build": "pnpm -r run build",
     "dev": "pnpm --filter shell dev",
     "test": "vitest run",
+    "test:e2e": "pnpm --filter @reactive/cli test:e2e",
     "typecheck": "tsc --build"
   },
   "devDependencies": {
     "typescript": "^6.0.2",
-    "vitest": "^3.2.0"
+    "vitest": "^4.1.0"
   }
 }
