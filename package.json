@@ -2,7 +2,8 @@
   "name": "tanstack-react-modules",
   "version": "1.0.0",
   "private": true,
-  "description": "Modular React framework for building composable frontend systems",
+  "packageManager": "pnpm@10.28.2",
+  "description": "Modular React framework for building composable frontend systems with TanStack Router and zustand.",
   "repository": {
     "type": "git",
     "url": "https://github.com/kibertoad/reactive.git"
