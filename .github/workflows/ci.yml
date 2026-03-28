@@ -60,9 +60,29 @@ jobs:
       node_version: ${{ matrix.node-version }}
       package_name: ${{ matrix.package-name }}
 
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22.x
+          package-manager-cache: false
+
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@latest --activate
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
   automerge:
-    needs: [build]
-    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped')
+    needs: [build, lint]
+    if: always() && (needs.build.result == 'success' || needs.build.result == 'skipped') && (needs.lint.result == 'success')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

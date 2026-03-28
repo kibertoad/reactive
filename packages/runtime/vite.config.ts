@@ -1,27 +1,25 @@
-import { defineConfig } from 'vite'
-import dts from 'vite-plugin-dts'
+import { defineConfig } from "vite";
+import dts from "vite-plugin-dts";
 
 export default defineConfig({
-  plugins: [
-    dts({ rollupTypes: true }),
-  ],
+  plugins: [dts({ rollupTypes: true })],
   build: {
     lib: {
-      entry: 'src/index.ts',
-      formats: ['es'],
-      fileName: 'index',
+      entry: "src/index.ts",
+      formats: ["es"],
+      fileName: "index",
     },
     rollupOptions: {
       external: [
-        'react',
-        'react/jsx-runtime',
-        'react-dom',
-        '@tanstack/react-router',
-        '@tanstack/react-query',
-        'zustand',
-        '@tanstack-react-modules/core',
+        "react",
+        "react/jsx-runtime",
+        "react-dom",
+        "@tanstack/react-router",
+        "@tanstack/react-query",
+        "zustand",
+        "@tanstack-react-modules/core",
       ],
     },
     sourcemap: true,
   },
-})
+});

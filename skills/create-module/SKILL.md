@@ -74,35 +74,41 @@ examples/modules/<module-name>/
 
 ```typescript
 // src/index.ts
-import { defineModule } from '@tanstack-react-modules/core'
-import { createRoute, lazyRouteComponent } from '@tanstack/react-router'
-import type { AppDependencies } from '@example/app-shared'
+import { defineModule } from "@tanstack-react-modules/core";
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
+import type { AppDependencies } from "@example/app-shared";
 
 export default defineModule<AppDependencies>({
-  id: '<module-name>',
-  version: '0.1.0',
+  id: "<module-name>",
+  version: "0.1.0",
 
   createRoutes: (parentRoute) => {
     const root = createRoute({
       getParentRoute: () => parentRoute,
-      path: '<module-name>',
-    })
+      path: "<module-name>",
+    });
 
     const index = createRoute({
       getParentRoute: () => root,
-      path: '/',
-      component: lazyRouteComponent(() => import('./pages/<PageName>.js')),
-    })
+      path: "/",
+      component: lazyRouteComponent(() => import("./pages/<PageName>.js")),
+    });
 
-    return root.addChildren([index])
+    return root.addChildren([index]);
   },
 
   navigation: [
-    { label: '<Module Label>', to: '/<module-name>', icon: '<icon-name>', group: '<group>', order: 30 },
+    {
+      label: "<Module Label>",
+      to: "/<module-name>",
+      icon: "<icon-name>",
+      group: "<group>",
+      order: 30,
+    },
   ],
 
-  requires: ['auth', 'httpClient'],
-})
+  requires: ["auth", "httpClient"],
+});
 ```
 
 ## Step 5: Create page components
@@ -137,8 +143,8 @@ export default function <PageName>() {
 Register it in the shell's `main.tsx`:
 
 ```typescript
-import newModule from '@example/<module-name>-module'
-registry.register(newModule)
+import newModule from "@example/<module-name>-module";
+registry.register(newModule);
 ```
 
 Add the workspace dependency to the shell's `package.json`:

@@ -1,6 +1,6 @@
 // Registry
-export { createRegistry } from './registry.js'
-export type { ReactiveRegistry, ResolveOptions } from './registry.js'
+export { createRegistry } from "./registry.js";
+export type { ReactiveRegistry, ResolveOptions } from "./registry.js";
 
 // Types
 export type {
@@ -9,20 +9,20 @@ export type {
   NavigationManifest,
   ApplicationManifest,
   ModuleEntry,
-} from './types.js'
+} from "./types.js";
 
 // Navigation
-export { useNavigation } from './navigation-context.js'
+export { useNavigation } from "./navigation-context.js";
 
 // Slots
-export { useSlots, SlotsContext } from './slots-context.js'
+export { useSlots, SlotsContext } from "./slots-context.js";
 
 // Zones
-export { useZones } from './zones.js'
-export { useActiveZones } from './active-zones.js'
+export { useZones } from "./zones.js";
+export { useActiveZones } from "./active-zones.js";
 
 // Modules
-export { useModules, getModuleMeta } from './modules-context.js'
+export { useModules, getModuleMeta } from "./modules-context.js";
 
 // Error boundary (for custom usage)
-export { ModuleErrorBoundary } from './error-boundary.js'
+export { ModuleErrorBoundary } from "./error-boundary.js";
