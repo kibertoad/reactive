@@ -1,4 +1,4 @@
-# Reactive
+# tanstack-react-modules
 
 Plug-and-play modular framework for React. Build frontend features as independent npm packages, compose them into a running application via a typed module registry.
 
@@ -1277,7 +1277,7 @@ scoped.useScoped(scopeId, selector) // React hook — selected slice
 
 React Compiler is a build-time tool that automatically optimizes React components by inserting memoization where needed. This is particularly valuable in a modular architecture where components are composed dynamically across package boundaries.
 
-### Why it matters for Reactive
+### Why it matters for tanstack-react-modules
 
 In a module-based app, the shell composes a deep provider tree and modules are loaded lazily. Without memoization, a state change in one provider (e.g., auth store) could trigger unnecessary re-renders down through the entire tree. Traditionally you'd prevent this with manual `React.memo()`, `useMemo()`, and `useCallback()` — but this is tedious and error-prone across independently developed modules.
 
@@ -1307,7 +1307,7 @@ The compiler runs at the shell level during bundling, so it optimizes both shell
 
 ### Compatibility
 
-React Compiler requires React 19. All Reactive framework packages target React 19 as a peer dependency.
+React Compiler requires React 19. All tanstack-react-modules framework packages target React 19 as a peer dependency.
 
 The framework's hooks (`useStore`, `useService`, `useNavigation`) follow React's rules of hooks and are fully compatible with the compiler. Avoid patterns the compiler cannot optimize:
 
@@ -1430,7 +1430,7 @@ The module's code is only loaded when the user first navigates to `/admin/*`.
 ## Project Structure
 
 ```
-reactive/
+tanstack-react-modules/
 ├── packages/
 │   ├── cli/                     # @tanstack-react-modules/cli — project scaffolding CLI
 │   ├── core/                    # @tanstack-react-modules/core — module types, hooks, defineModule()
