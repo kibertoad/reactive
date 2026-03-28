@@ -1,9 +1,9 @@
 {
   "name": "@tanstack-react-modules/cli",
-  "version": "0.5.0",
+  "version": "1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kibertoad/tanstack-react-modules.git",
+    "url": "git+https://github.com/kibertoad/tanstack-react-modules.git",
     "directory": "packages/cli"
   },
   "bin": {
@@ -24,7 +24,7 @@
     "test:e2e:server": "cd .e2e-output/smoke-app/shell && node node_modules/vite/bin/vite.js --port 5188",
     "test:e2e": "playwright test smoke.e2e.ts",
     "clean": "rimraf dist .test-output .e2e-output",
-    "prepublishOnly": "pnpm build && test -f dist/cli.js"
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
