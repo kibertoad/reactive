@@ -1,4 +1,4 @@
-import { createContext, useContext, useSyncExternalStore, useCallback } from "react";
+import { createContext, useContext, useSyncExternalStore } from "react";
 import { useStore as useZustandStore } from "zustand";
 import type { StoreApi } from "zustand";
 import type { ReactiveService } from "./types.js";
@@ -142,9 +142,7 @@ export function createSharedHooks<TSharedDependencies extends Record<string, any
       );
     }
 
-    const getSnapshot = selector
-      ? () => selector(rs.getSnapshot())
-      : rs.getSnapshot;
+    const getSnapshot = selector ? () => selector(rs.getSnapshot()) : rs.getSnapshot;
 
     return useSyncExternalStore(rs.subscribe, getSnapshot);
   }

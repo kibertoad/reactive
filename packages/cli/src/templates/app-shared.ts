@@ -95,7 +95,7 @@ export interface AppSlots {
 
 // ---- Typed hooks (use these in all modules) ----
 
-export const { useStore, useService } = createSharedHooks<AppDependencies>()
+export const { useStore, useService, useReactiveService, useOptional } = createSharedHooks<AppDependencies>()
 `;
 }
 

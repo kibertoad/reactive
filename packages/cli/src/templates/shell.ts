@@ -108,6 +108,7 @@ import { Home } from './components/Home.js'
 const registry = createRegistry<AppDependencies, AppSlots>({
   stores: { auth: authStore, config: configStore },
   services: { httpClient },
+  reactiveServices: {},
   slots: { commands: [] },
 })
 

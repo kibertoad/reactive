@@ -99,7 +99,7 @@ export default defineModule<AppDependencies, AppSlots>({
     ${navItems.join(",\n    ")},
   ],
 
-  requires: ['auth', 'httpClient'],
+  requires: ['auth'],
 })
 `;
 }
@@ -156,6 +156,54 @@ export default function ${params.pageName}() {
     </div>
   )
 }
+`;
+}
+
+export function moduleTest(params: {
+  scope: string;
+  name: string;
+  importName: string;
+  route: string;
+  pageName: string;
+}): string {
+  return `import { describe, it, expect } from 'vitest'
+import { renderModule, createMockStore } from '@tanstack-react-modules/testing'
+import type { AppDependencies } from '${params.scope}/app-shared'
+import ${params.importName} from '../index.js'
+
+const mockAuth = createMockStore<AppDependencies['auth']>({
+  user: { id: 'usr-001', name: 'Test User', email: 'test@example.com', role: 'admin' },
+  token: 'mock-token',
+  isAuthenticated: true,
+  login: async () => {},
+  logout: () => {},
+})
+
+const mockConfig = createMockStore<AppDependencies['config']>({
+  apiBaseUrl: 'http://localhost:3000/api',
+  environment: 'dev',
+  appName: 'Test',
+})
+
+describe('${params.name} module', () => {
+  it('renders the index page', async () => {
+    const { getByText } = await renderModule(${params.importName}, {
+      route: '/${params.route}',
+      deps: { auth: mockAuth, config: mockConfig },
+    })
+
+    expect(getByText('${capitalize(params.name)}')).toBeDefined()
+  })
+
+  it('renders the list page', async () => {
+    const { getByText } = await renderModule(${params.importName}, {
+      route: '/${params.route}/list',
+      deps: { auth: mockAuth, config: mockConfig },
+    })
+
+    expect(getByText('${capitalize(params.name)} List')).toBeDefined()
+  })
+})
 `;
 }
 

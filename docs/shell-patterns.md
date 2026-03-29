@@ -359,14 +359,14 @@ Deeper routes override shallower ones. A billing section root can set a default 
 For modules that only contribute slot data (no component, no routes), use `defineSlots` instead of `defineModule` to reduce boilerplate:
 
 ```typescript
-import { defineSlots } from '@tanstack-react-modules/core'
-import type { AppDependencies, AppSlots } from '@myorg/app-shared'
+import { defineSlots } from "@tanstack-react-modules/core";
+import type { AppDependencies, AppSlots } from "@myorg/app-shared";
 
-export default defineSlots<AppDependencies, AppSlots>('external-systems', {
+export default defineSlots<AppDependencies, AppSlots>("external-systems", {
   systems: [
-    { id: 'salesforce', name: 'Salesforce', iframeUrl: '...', icon: 'Building2', category: 'crm' },
+    { id: "salesforce", name: "Salesforce", iframeUrl: "...", icon: "Building2", category: "crm" },
   ],
-})
+});
 ```
 
 This is syntactic sugar — the registry sees a normal `ReactiveModuleDescriptor` with `version: '0.0.0'` and no component or lifecycle. Use `defineModule` when the module has any of: `component`, `createRoutes`, `meta`, `zones`, `requires`, or `lifecycle`.
@@ -377,22 +377,22 @@ Modules can declare dependencies they can function without using `optionalRequir
 
 ```typescript
 export default defineModule<AppDependencies, AppSlots>({
-  id: 'billing',
-  version: '0.1.0',
-  requires: ['httpClient'],            // hard requirement — throws if missing
-  optionalRequires: ['analytics'],      // soft requirement — warns if missing
+  id: "billing",
+  version: "0.1.0",
+  requires: ["httpClient"], // hard requirement — throws if missing
+  optionalRequires: ["analytics"], // soft requirement — warns if missing
   // ...
-})
+});
 ```
 
 In components, use `useOptional` to safely access deps that may not be registered:
 
 ```typescript
-import { useOptional } from '@myorg/app-shared'
+import { useOptional } from "@myorg/app-shared";
 
 function BillingDashboard() {
-  const analytics = useOptional('analytics')
-  analytics?.track('billing_viewed')  // no-op if analytics not registered
+  const analytics = useOptional("analytics");
+  analytics?.track("billing_viewed"); // no-op if analytics not registered
   // ...
 }
 ```

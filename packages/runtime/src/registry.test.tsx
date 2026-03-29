@@ -160,7 +160,7 @@ describe("createRegistry", () => {
     const { App } = registry.resolve();
     expect(App).toBeDefined();
     expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('optional dependencies not provided: api'),
+      expect.stringContaining("optional dependencies not provided: api"),
     );
 
     warnSpy.mockRestore();

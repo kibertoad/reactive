@@ -8,7 +8,7 @@ import type {
   SlotMap,
   SlotMapOf,
 } from "@tanstack-react-modules/core";
-import { isStoreApi } from "@tanstack-react-modules/core";
+
 import type {
   RegistryConfig,
   ApplicationManifest,

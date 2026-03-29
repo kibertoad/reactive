@@ -11,6 +11,7 @@ import {
   moduleDescriptor,
   modulePage,
   moduleListPage,
+  moduleTest,
 } from "../templates/module.js";
 
 export default defineCommand({
@@ -103,6 +104,7 @@ export default defineCommand({
 
     // Scaffold module directory
     mkdirSync(resolve(moduleDir, "src", "pages"), { recursive: true });
+    mkdirSync(resolve(moduleDir, "src", "__tests__"), { recursive: true });
     writeFileSync(resolve(moduleDir, "package.json"), modulePackageJson({ scope, name }));
     writeFileSync(resolve(moduleDir, "tsconfig.json"), moduleTsconfig());
     writeFileSync(
@@ -116,6 +118,10 @@ export default defineCommand({
     writeFileSync(
       resolve(moduleDir, "src", "pages", `${listPageName}.tsx`),
       moduleListPage({ scope, pageName: listPageName, moduleLabel: toPascalCase(name) }),
+    );
+    writeFileSync(
+      resolve(moduleDir, "src", "__tests__", `${name}.test.ts`),
+      moduleTest({ scope, name, importName, route, pageName }),
     );
 
     // Wire into shell
