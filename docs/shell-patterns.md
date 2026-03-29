@@ -95,7 +95,7 @@ export interface AppSlots {
 
 `slots.commands` is for actions the module can execute itself. Don't use it for:
 
-- **Journey launching** — use `meta` instead, the shell discovers journeys via `useModules()`
+- **Workflow launching** — use `meta` instead, the shell discovers workflows via `useModules()`
 - **Navigation** — use `navigation` on the module descriptor
 - **System launching** — use a domain-specific slot (e.g. `slots.systems`)
 
@@ -128,7 +128,7 @@ The shell aggregates all sources. Journey modules appear via `useModules()`, not
 
 ```typescript
 import { useSlots, useModules, getModuleMeta, useNavigation } from '@tanstack-react-modules/runtime'
-import type { AppSlots, JourneyMeta } from '@myorg/app-shared'
+import type { AppSlots, WorkflowMeta } from '@myorg/app-shared'
 
 function CommandPalette({ search }: { search: string }) {
   const { systems, commands } = useSlots<AppSlots>()
@@ -136,9 +136,9 @@ function CommandPalette({ search }: { search: string }) {
   const navigation = useNavigation()
 
   // Journey modules from catalog
-  const journeys = modules
-    .filter((m) => m.component && getModuleMeta<JourneyMeta>(m)?.category)
-    .map((m) => ({ entry: m, meta: getModuleMeta<JourneyMeta>(m)! }))
+  const workflows = modules
+    .filter((m) => m.component && getModuleMeta<WorkflowMeta>(m)?.category)
+    .map((m) => ({ entry: m, meta: getModuleMeta<WorkflowMeta>(m)! }))
 
   // Module-contributed commands (self-executing actions)
   const grouped = Map.groupBy(commands, (cmd) => cmd.group ?? 'other')
@@ -151,7 +151,7 @@ function CommandPalette({ search }: { search: string }) {
       ))}
 
       {/* Journey modules from catalog */}
-      {journeys.map(({ entry, meta }) => (
+      {workflows.map(({ entry, meta }) => (
         <button key={entry.id} onClick={() => openJourney(entry, meta)}>{meta.name}</button>
       ))}
 

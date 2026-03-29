@@ -10,7 +10,7 @@ Use these patterns when your app has:
 
 - **Tabbed workspaces** — users open and close content tabs within a persistent shell
 - **Component-only modules** — modules render via the shell (not via URL routes)
-- **Per-session state** — each interaction/customer/ticket has its own tab state, scratchpad, etc.
+- **Per-session state** — each customer/ticket/case has its own tab state, notes, etc.
 - **Contextual panels that change per tab** — the active tab determines what shows in a sidebar
 
 If your app is a traditional page-navigated SPA where modules own routes, the core framework + [Shell Patterns](shell-patterns.md) are sufficient.
@@ -33,7 +33,7 @@ If your app is a traditional page-navigated SPA where modules own routes, the co
 │  │      │ │ └──────────────────────────────┘  │ │         │ │
 │  └──────┘ └──────────────────────────────────┘ └─────────┘ │
 │  ┌─────────────────────────────────────────────────────────┐│
-│  │ Scratchpad / Drawer                                     ││
+│  │ Notes / Drawer                                          ││
 │  └─────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -46,7 +46,7 @@ The shell owns the layout. Modules contribute content through five channels:
 | Global contributions  | `slots` on module descriptor      | Command palette entries, tab type registrations |
 | Route-specific panels | `staticData` on routes (zones)    | Detail panel for a route-based page             |
 | Tab-active panels     | `zones` on module descriptor      | Contextual panel when a module tab is active    |
-| Runtime state         | Shared Zustand stores             | Active tab, interaction state, panel visibility |
+| Runtime state         | Shared Zustand stores             | Active tab, session state, panel visibility     |
 
 ## Step 1: Define the contracts in app-shared
 
@@ -93,22 +93,23 @@ export interface WorkspaceActions {
 
 export interface AppDependencies {
   auth: AuthStore;
-  interactions: InteractionsStore;
+  sessions: SessionsStore;
   ui: UIStore;
   httpClient: { get: (url: string) => Promise<unknown> };
   workspace: WorkspaceActions;
 }
 
 // ---- Module metadata for catalog discovery ----
+// Define your own metadata shape — the framework passes it through via TMeta generic.
 
-export interface JourneyMeta {
+export interface WorkflowMeta {
   readonly name: string;
   readonly description: string;
   readonly icon: string;
   readonly category: string;
   readonly estimatedTime?: string;
   readonly keepOpenOnComplete?: boolean;
-  readonly addScratchpadEntry?: boolean;
+  readonly addNoteOnComplete?: boolean;
 }
 
 // ---- Typed hooks ----
@@ -127,57 +128,57 @@ import { createStore } from "zustand/vanilla";
 
 export interface WorkspaceTab {
   id: string;
-  type: "directory" | "iframe" | "native-journey";
+  type: "directory" | "iframe" | "native-workflow";
   title: string;
-  journeyId?: string; // for native-journey tabs
-  iframeUrl?: string; // for iframe tabs
+  workflowId?: string; // for native-workflow tabs
+  iframeUrl?: string;  // for iframe tabs
   closeable: boolean;
   lastAccessedAt: number;
 }
 
-export interface TabStateByInteraction {
+export interface TabStateBySession {
   tabs: WorkspaceTab[];
   activeTabId: string;
 }
 
 export const workspaceTabsStore = createStore<WorkspaceTabsState>((set, get) => ({
-  tabStateByInteraction: {},
+  tabStateBySession: {},
 
-  getCurrentTabs: (interactionId) => {
-    return get().tabStateByInteraction[interactionId]?.tabs ?? [createDirectoryTab()];
+  getCurrentTabs: (sessionId) => {
+    return get().tabStateBySession[sessionId]?.tabs ?? [createDirectoryTab()];
   },
 
-  getActiveTab: (interactionId) => {
-    const tabState = get().tabStateByInteraction[interactionId];
+  getActiveTab: (sessionId) => {
+    const tabState = get().tabStateBySession[sessionId];
     if (!tabState) return null;
     return tabState.tabs.find((t) => t.id === tabState.activeTabId) ?? null;
   },
 
-  openTabForInteraction: (interactionId, tab) =>
+  openTabForSession: (sessionId, tab) =>
     set((state) => {
       // Activate existing tab or append new one, with LRU eviction
       // ...
     }),
 
-  // closeTabForInteraction, switchTab, etc.
+  // closeTab, switchTab, etc.
 }));
 ```
 
 ### Cross-store coordination for tab initialization
 
-When a new interaction is selected, initialize its tab state. Use Zustand's `subscribe` API (see [Cross-Store Coordination](shell-patterns.md#cross-store-coordination)):
+When a new session is selected, initialize its tab state. Use Zustand's `subscribe` API (see [Cross-Store Coordination](shell-patterns.md#cross-store-coordination)):
 
 ```typescript
-interactionsStore.subscribe((state, prev) => {
-  if (state.activeInteractionId === prev.activeInteractionId) return;
-  const id = state.activeInteractionId;
+sessionsStore.subscribe((state, prev) => {
+  if (state.activeSessionId === prev.activeSessionId) return;
+  const id = state.activeSessionId;
   if (!id) return;
 
   const tabs = workspaceTabsStore.getState();
-  if (!tabs.tabStateByInteraction[id]) {
+  if (!tabs.tabStateBySession[id]) {
     workspaceTabsStore.setState({
-      tabStateByInteraction: {
-        ...tabs.tabStateByInteraction,
+      tabStateBySession: {
+        ...tabs.tabStateBySession,
         [id]: { tabs: [createDirectoryTab()], activeTabId: "directory" },
       },
     });
@@ -190,30 +191,30 @@ interactionsStore.subscribe((state, prev) => {
 Workspace modules use `component` instead of `createRoutes`. The shell renders them in tabs. They declare `meta` for catalog discovery and `zones` for contextual panels:
 
 ```typescript
-// modules/dd-setup/src/index.ts
+// modules/onboarding-flow/src/index.ts
 import { defineModule } from "@tanstack-react-modules/core";
 import { lazy } from "react";
-import { DDSetupContextualPanel } from "./DDSetupContextualPanel.js";
+import { OnboardingPanel } from "./OnboardingPanel.js";
 
-export default defineModule<AppDependencies, AppSlots, JourneyMeta>({
-  id: "dd-setup",
+export default defineModule<AppDependencies, AppSlots, WorkflowMeta>({
+  id: "onboarding-flow",
   version: "0.1.0",
 
   // The shell renders this in a workspace tab
-  component: lazy(() => import("./DDSetupJourney.js")),
+  component: lazy(() => import("./OnboardingFlow.js")),
 
   // Catalog metadata — shell reads via useModules() + getModuleMeta()
   meta: {
-    name: "Set up Direct Debit",
-    description: "Configure a new Direct Debit mandate",
-    icon: "CreditCard",
-    category: "payments",
-    estimatedTime: "2-3 mins",
+    name: "Customer Onboarding",
+    description: "Walk through the new customer setup process",
+    icon: "UserPlus",
+    category: "setup",
+    estimatedTime: "5-10 mins",
   },
 
   // Zones — shell reads via useActiveZones() when this module's tab is active
   zones: {
-    contextualPanel: DDSetupContextualPanel,
+    contextualPanel: OnboardingPanel,
   },
 
   requires: ["auth", "httpClient"],
@@ -222,10 +223,10 @@ export default defineModule<AppDependencies, AppSlots, JourneyMeta>({
 
 ### Module components receive standard props
 
-The shell defines a standard props interface for workspace components. Journey-style modules get:
+The shell defines a standard props interface for workspace components:
 
 ```typescript
-export interface JourneyProps {
+export interface WorkflowProps {
   customerId: string;
   accountNumber: string;
   onComplete: (result?: unknown) => void;
@@ -240,8 +241,8 @@ Tab-based modules can't use `staticData` zones because they're not rendered via 
 
 ```typescript
 zones: {
-  contextualPanel: DDSetupContextualPanel,
-  headerActions: DDSetupHeaderActions,
+  contextualPanel: OnboardingPanel,
+  headerActions: OnboardingHeaderActions,
 }
 ```
 
@@ -253,9 +254,9 @@ import type { AppZones } from '@myorg/app-shared'
 
 function ShellLayout() {
   // Derive the active module ID from workspace tab state
-  const activeTab = getActiveTabForCurrentInteraction()
+  const activeTab = getActiveTabForCurrentSession()
   const activeModuleId =
-    activeTab?.type === 'native-journey' ? activeTab.journeyId : null
+    activeTab?.type === 'native-workflow' ? activeTab.workflowId : null
 
   const zones = useActiveZones<AppZones>(activeModuleId)
   const ContextualPanel = zones.contextualPanel
@@ -286,17 +287,17 @@ The shell builds a browsable directory of available modules using `useModules()`
 
 ```typescript
 import { useModules, getModuleMeta } from '@tanstack-react-modules/runtime'
-import type { JourneyMeta } from '@myorg/app-shared'
+import type { WorkflowMeta } from '@myorg/app-shared'
 
 function DirectoryPage() {
   const modules = useModules()
 
   // Only show modules that have catalog metadata
-  const discoverable = modules.filter((m) => getModuleMeta<JourneyMeta>(m)?.category)
+  const discoverable = modules.filter((m) => getModuleMeta<WorkflowMeta>(m)?.category)
 
   // Group by category
   const byCategory = Map.groupBy(discoverable, (m) =>
-    getModuleMeta<JourneyMeta>(m)!.category
+    getModuleMeta<WorkflowMeta>(m)!.category
   )
 
   return (
@@ -306,7 +307,7 @@ function DirectoryPage() {
           <h2>{capitalize(category)}</h2>
           <div className="grid grid-cols-3 gap-4">
             {mods.map((mod) => {
-              const meta = getModuleMeta<JourneyMeta>(mod)!
+              const meta = getModuleMeta<WorkflowMeta>(mod)!
               return (
                 <Card key={mod.id}>
                   <h3>{meta.name}</h3>
@@ -334,7 +335,7 @@ When a tab is active, the shell looks up the module and renders its `component`:
 ```typescript
 import { useModules } from '@tanstack-react-modules/runtime'
 
-function WorkspaceContent({ activeTab, customerId, accountNumber, interactionId }) {
+function WorkspaceContent({ activeTab, customerId, accountNumber, sessionId }) {
   const modules = useModules()
 
   if (activeTab.type === 'directory') return <DirectoryPage />
@@ -343,41 +344,41 @@ function WorkspaceContent({ activeTab, customerId, accountNumber, interactionId 
     return <IframeContainer url={activeTab.iframeUrl} title={activeTab.title} />
   }
 
-  // native-journey — look up the module
-  const mod = modules.find((m) => m.id === activeTab.journeyId)
-  if (!mod?.component) return <p>Module "{activeTab.journeyId}" not found</p>
+  // native-workflow — look up the module
+  const mod = modules.find((m) => m.id === activeTab.workflowId)
+  if (!mod?.component) return <p>Module "{activeTab.workflowId}" not found</p>
 
   return (
-    <JourneyWrapper
-      journeyId={activeTab.journeyId}
+    <WorkflowWrapper
+      workflowId={activeTab.workflowId}
       customerId={customerId}
       accountNumber={accountNumber}
-      interactionId={interactionId}
+      sessionId={sessionId}
       tabId={activeTab.id}
     />
   )
 }
 ```
 
-### Journey wrapper
+### Workflow wrapper
 
-The journey wrapper handles auto-save, completion behavior, and error boundaries:
+The wrapper handles completion behavior and error boundaries:
 
 ```typescript
-function JourneyWrapper({ journeyId, customerId, accountNumber, interactionId, tabId }) {
+function WorkflowWrapper({ workflowId, customerId, accountNumber, sessionId, tabId }) {
   const modules = useModules()
-  const mod = modules.find((m) => m.id === journeyId)
-  const meta = getModuleMeta<JourneyMeta>(mod!)
+  const mod = modules.find((m) => m.id === workflowId)
+  const meta = getModuleMeta<WorkflowMeta>(mod!)
 
   const handleComplete = (result?: unknown) => {
-    saveJourneyState(journeyId, result)
+    saveWorkflowState(workflowId, result)
 
     // Respect module's completion preferences
-    if (meta?.addScratchpadEntry !== false) {
-      addScratchpadEntry(interactionId, `Journey completed: ${meta?.name ?? journeyId}`)
+    if (meta?.addNoteOnComplete !== false) {
+      addNote(sessionId, `Workflow completed: ${meta?.name ?? workflowId}`)
     }
     if (!meta?.keepOpenOnComplete) {
-      closeTab(interactionId, tabId)
+      closeTab(sessionId, tabId)
     }
   }
 
@@ -389,8 +390,8 @@ function JourneyWrapper({ journeyId, customerId, accountNumber, interactionId, t
           customerId={customerId}
           accountNumber={accountNumber}
           onComplete={handleComplete}
-          onCancel={() => closeTab(interactionId, tabId)}
-          initialState={loadJourneyState(journeyId)}
+          onCancel={() => closeTab(sessionId, tabId)}
+          initialState={loadWorkflowState(workflowId)}
         />
       </Suspense>
     </ErrorBoundary>
@@ -398,31 +399,31 @@ function JourneyWrapper({ journeyId, customerId, accountNumber, interactionId, t
 }
 ```
 
-Modules control their own completion behavior via `JourneyMeta`:
+Modules control their own completion behavior via `WorkflowMeta`:
 
 - `keepOpenOnComplete: true` — tab stays open, module shows its own post-completion UI
-- `addScratchpadEntry: false` — no automatic scratchpad entry on completion
+- `addNoteOnComplete: false` — no automatic note on completion
 
-## Step 7: Per-interaction state with scoped stores
+## Step 7: Per-session state with scoped stores
 
-For apps where each interaction/session has independent state, use `createScopedStore`:
+For apps where each session has independent state, use `createScopedStore`:
 
 ```typescript
 import { createScopedStore } from "@tanstack-react-modules/core";
 
-const interactionTabs = createScopedStore<TabState>(() => ({
+const sessionTabs = createScopedStore<TabState>(() => ({
   tabs: [{ id: "directory", type: "directory", title: "Directory", closeable: false }],
   activeTabId: "directory",
 }));
 
-// In a component — subscribe to this interaction's tab state
-function Workspace({ interactionId }: { interactionId: string }) {
-  const { tabs, activeTabId } = interactionTabs.useScoped(interactionId);
+// In a component — subscribe to this session's tab state
+function Workspace({ sessionId }: { sessionId: string }) {
+  const { tabs, activeTabId } = sessionTabs.useScoped(sessionId);
   // ...
 }
 
-// Cleanup when interaction ends
-interactionTabs.remove(interactionId);
+// Cleanup when session ends
+sessionTabs.remove(sessionId);
 ```
 
 ## How modules trigger workspace actions
@@ -466,7 +467,7 @@ function InvoiceActions({ invoiceId }: { invoiceId: string }) {
 | Command palette entries              | Modules  | `slots.commands`                                              |
 | Directory page                       | Shell    | Reads `useModules()`, filters by `meta`                       |
 | Tab state, active tab                | Shell    | Zustand store                                                 |
-| Per-interaction state                | Shell    | `createScopedStore`                                           |
+| Per-session state                    | Shell    | `createScopedStore`                                           |
 | Tab rendering                        | Shell    | Looks up module by id via `useModules()`, renders `component` |
 
 The framework provides the composition primitives. The shell owns the workspace architecture. Modules stay standalone and testable — they declare what they contribute, the shell decides where it goes.

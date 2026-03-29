@@ -862,14 +862,14 @@ Tab-based modules (rendered in workspace tabs rather than via routes) declare zo
 ```typescript
 import { PaymentsContextualPanel } from "./PaymentsContextualPanel.js";
 
-export default defineModule<AppDependencies, AppSlots, JourneyMeta>({
+export default defineModule<AppDependencies, AppSlots, WorkflowMeta>({
   id: "my-module",
   version: "0.1.0",
   component: lazy(() => import("./MyModuleComponent.js")),
   zones: {
     contextualPanel: PaymentsContextualPanel,
   },
-  meta: { name: "Set up Direct Debit", category: "payments", icon: "CreditCard" },
+  meta: { name: "Payment Setup", category: "payments", icon: "CreditCard" },
 });
 ```
 
@@ -968,7 +968,7 @@ The `meta` field accepts a `TMeta` generic for compile-time validation. Define a
 
 ```typescript
 // app-shared/src/index.ts
-export interface JourneyMeta {
+export interface WorkflowMeta {
   readonly name: string;
   readonly description: string;
   readonly icon: string;
@@ -982,9 +982,9 @@ Then use it as the third generic on `defineModule`:
 ```typescript
 import { defineModule } from "@tanstack-react-modules/core";
 import { lazy } from "react";
-import type { AppDependencies, AppSlots, JourneyMeta } from "@myorg/app-shared";
+import type { AppDependencies, AppSlots, WorkflowMeta } from "@myorg/app-shared";
 
-export default defineModule<AppDependencies, AppSlots, JourneyMeta>({
+export default defineModule<AppDependencies, AppSlots, WorkflowMeta>({
   id: "payments",
   version: "0.1.0",
   component: lazy(() => import("./PaymentsComponent.js")),
@@ -1007,19 +1007,19 @@ Use `getModuleMeta<TMeta>()` to read metadata without casts:
 
 ```typescript
 import { useModules, getModuleMeta } from '@tanstack-react-modules/runtime'
-import type { JourneyMeta } from '@myorg/app-shared'
+import type { WorkflowMeta } from '@myorg/app-shared'
 
 function DirectoryPage() {
   const modules = useModules()
   const journeys = modules.filter((m) => {
-    const meta = getModuleMeta<JourneyMeta>(m)
+    const meta = getModuleMeta<WorkflowMeta>(m)
     return meta?.category === 'payments'
   })
 
   return (
     <div>
       {journeys.map((mod) => {
-        const meta = getModuleMeta<JourneyMeta>(mod)!
+        const meta = getModuleMeta<WorkflowMeta>(mod)!
         return (
           <Card key={mod.id}>
             <h3>{meta.name}</h3>
@@ -1172,7 +1172,7 @@ function UserDetail() {
 
 `createScopedStore` creates a `Map<string, StoreApi<T>>` with lazy initialization — each scope key gets its own independent Zustand store, created on first access.
 
-Use this for **per-entity state**: per-interaction tabs, per-conversation messages, per-workspace scratchpads — anywhere you have a dynamic collection of entities that each need independent state.
+Use this for **per-entity state**: per-session tabs, per-conversation messages, per-workspace notes — anywhere you have a dynamic collection of entities that each need independent state.
 
 ### The problem
 
@@ -1198,7 +1198,7 @@ const useShellStore = create((set, get) => ({
 }));
 ```
 
-This boilerplate multiplies with every scoped concern — tabs, scratchpad, journey state, etc.
+This boilerplate multiplies with every scoped concern — tabs, notes, workflow state, etc.
 
 ### The solution
 
