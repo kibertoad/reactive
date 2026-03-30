@@ -281,6 +281,23 @@ function ShellLayout() {
 
 This gives the shell one code path regardless of whether the active content is route-based or tab-based.
 
+### How tab switches update zones
+
+When the user clicks a different tab, the zone layout updates through a reactive chain — no imperative wiring needed:
+
+```
+User clicks tab "Billing"
+  → workspaceTabsStore updates activeTabId
+    → ShellLayout re-renders (subscribed to the store)
+      → derives activeModuleId = "billing" from the new active tab
+        → useActiveZones("billing") returns billing module's zones
+          → layout renders BillingContextPanel in the aside
+```
+
+Each step is a standard React/Zustand subscription. The shell layout subscribes to the tab store, derives `activeModuleId` from the active tab, and passes it to `useActiveZones`. When the tab changes, React re-renders the layout and `useActiveZones` returns the new module's zones automatically.
+
+When switching to a tab that has no module (e.g. a directory tab or an iframe tab), `activeModuleId` resolves to `null`, and `useActiveZones(null)` falls back to route zones only. If no route contributes zones either, every zone key is `undefined` and the shell renders its fallback content.
+
 ## Step 5: Directory page from module catalog
 
 The shell builds a browsable directory of available modules using `useModules()` and `getModuleMeta()`:

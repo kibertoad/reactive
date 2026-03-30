@@ -125,6 +125,21 @@ Note that the framework does **not** solve independent deployment. Modules are c
 └─────────────────────────────────────────────────────────┘
 ```
 
+### What maps to what on screen
+
+| Framework entity              | What the user sees                                                                                  |
+| ----------------------------- | --------------------------------------------------------------------------------------------------- |
+| **Shell**                     | The persistent chrome: top bar, sidebar, footer. Always visible.                                    |
+| **Module**                    | A feature area. In route-based apps, a set of pages (`/billing/*`). In workspace apps, a tab.       |
+| **Route** (`createRoutes`)    | A page within a module. URL changes, content area updates.                                          |
+| **Component** (on descriptor) | A module's UI rendered by the shell in a tab, panel, or modal — not tied to a URL.                  |
+| **Zone**                      | A named layout region (sidebar, header actions, detail panel) whose content changes per page or tab. |
+| **Slot**                      | A global collection rendered once (command palette entries, badge counts). All modules contribute.   |
+| **Navigation item**           | A link in the sidebar or mode rail.                                                                 |
+| **Shared dependency**         | Invisible. Services and stores modules consume (auth, HTTP client) — no direct UI.                  |
+
+A single module can use routes, zones, slots, and navigation together. A billing module might own `/billing/*` routes, contribute a detail panel zone on its invoice page, add commands to the command palette via slots, and show a "Billing" link in the sidebar via navigation.
+
 **Key principles:**
 
 - Modules are standard npm packages. They can live in the same monorepo or be published to a registry.
@@ -1003,6 +1018,82 @@ Add `@tanstack/router-core` as a peer dependency of app-shared so the augmentati
 **Tab-based modules** (component-only, rendered in workspace tabs) use the `zones` field on the module descriptor. Since these modules don't own routes, they can't use `staticData`. The descriptor's zones apply whenever the module's tab is active.
 
 Use `useActiveZones(activeModuleId)` to unify both - one code path in the shell regardless of how the active content is rendered.
+
+### Modules with internal sub-navigation
+
+A module like "Billing" may have its own tabs (invoices, payments, cards) while still being a single module. How zones work depends on the app style:
+
+**Route-based apps** — each sub-page is a child route with its own `staticData`. Zones update automatically as the user navigates between `/billing/invoices` and `/billing/payments`:
+
+```typescript
+import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
+import { InvoiceActions } from "./components/InvoiceActions.js";
+import { PaymentsSidebar } from "./components/PaymentsSidebar.js";
+
+const billingRoot = createRoute({
+  getParentRoute: () => parentRoute,
+  path: "billing",
+  component: BillingLayout, // renders a tab strip + <Outlet />
+});
+
+const invoices = createRoute({
+  getParentRoute: () => billingRoot,
+  path: "invoices",
+  component: lazyRouteComponent(() => import("./pages/Invoices.js")),
+  staticData: {
+    detailPanel: InvoiceSidebar,
+    headerActions: InvoiceActions,
+  },
+});
+
+const payments = createRoute({
+  getParentRoute: () => billingRoot,
+  path: "payments",
+  component: lazyRouteComponent(() => import("./pages/Payments.js")),
+  staticData: {
+    detailPanel: PaymentsSidebar,
+    // no headerActions — zone is undefined, shell renders fallback
+  },
+});
+```
+
+The module's `BillingLayout` component renders its own tab strip UI and an `<Outlet />`. The router handles the rest — each child route contributes its own zones.
+
+**Workspace apps** — the module is one tab with one `zones` field on the descriptor, but internal navigation is module-owned state. The zone component reads that state and renders the right content:
+
+```typescript
+// Module descriptor — one zone component that adapts internally
+export default defineModule<AppDependencies, AppSlots>({
+  id: "billing",
+  version: "0.1.0",
+  component: lazy(() => import("./BillingWorkspace.js")),
+  zones: {
+    contextualPanel: BillingContextPanel,
+  },
+});
+```
+
+```typescript
+// BillingContextPanel reads the module's internal tab state
+import { useBillingStore } from "./stores/billing.js";
+
+function BillingContextPanel() {
+  const activeTab = useBillingStore((s) => s.activeTab);
+
+  switch (activeTab) {
+    case "invoices":
+      return <InvoiceSidebar />;
+    case "payments":
+      return <PaymentsSidebar />;
+    case "cards":
+      return <CardsSidebar />;
+    default:
+      return null;
+  }
+}
+```
+
+The shell sees one zone component. The module manages its own sub-navigation internally — the zone component is a regular React component and can render whatever it needs based on module state.
 
 ---
 
