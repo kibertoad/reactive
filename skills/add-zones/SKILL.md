@@ -97,6 +97,41 @@ export function Layout() {
 }
 ```
 
+## Initial state and navigation
+
+Zones are fully reactive — they re-evaluate on every route change. There is no "sticky" behavior and no implicit default.
+
+**On first render (or when no route contributes zones)**, every zone key is `undefined`. The shell layout must handle this with fallback content or conditional rendering:
+
+```typescript
+// When no matched route sets detailPanel, zones.detailPanel is undefined
+{zones.detailPanel ? <zones.detailPanel /> : <DefaultSidebar />}
+```
+
+**When navigating between routes**, zones that were filled by the previous route disappear if the new route doesn't contribute them:
+
+```
+Navigate: /users/123  →  /settings
+  zones before: { headerActions: UserActions, detailPanel: UserSidebar }
+  zones after:  { headerActions: undefined,   detailPanel: undefined   }
+```
+
+Zones are derived entirely from the currently matched route hierarchy — they do not carry over from the previous page. If a zone should persist across multiple routes, set it on a shared parent layout route that stays matched:
+
+```typescript
+// This layout route stays matched for all /users/* routes
+const usersLayout = createRoute({
+  getParentRoute: () => rootRoute,
+  id: "users-layout",
+  component: UsersLayout,
+  staticData: {
+    headerActions: UsersHeaderActions, // persists across all /users/* pages
+  },
+});
+```
+
+For workspace-style apps using `useActiveZones`, the same rules apply. When the active tab changes to a module that doesn't declare zones, those zone keys revert to whatever the route hierarchy provides (or `undefined` if no route sets them either).
+
 ## How route zone merging works
 
 `useZones()` walks all matched routes from root to leaf and returns a merged map. The **deepest match wins** for each zone key:
@@ -156,6 +191,79 @@ export function WorkspaceLayout({ activeModuleId }: { activeModuleId: string | n
 ```
 
 When `activeModuleId` is `null` or `undefined`, `useActiveZones` returns only route zones (same as `useZones`).
+
+## Dynamic zone visibility (toggling zones without navigation)
+
+Zones answer **what** component fills a layout region. **Whether** that region is visible is a separate concern.
+
+If a page has six zones and a button should toggle one of them, the zone component is still contributed by the route. Visibility is controlled by shell-owned state (a Zustand store or local React state):
+
+```typescript
+// app-shared/src/index.ts
+export interface UIState {
+  visibleZones: Record<string, boolean>;
+  toggleZone: (key: string) => void;
+}
+```
+
+```typescript
+// shell/src/components/Layout.tsx
+import { useZones } from "@tanstack-react-modules/runtime";
+import { useStore } from "@example/app-shared";
+import type { AppZones } from "@example/app-shared";
+
+export function Layout() {
+  const zones = useZones<AppZones>();
+  const visibleZones = useStore("ui", (s) => s.visibleZones);
+
+  const DetailPanel = zones.detailPanel;
+  const Inspector = zones.inspector;
+  const Timeline = zones.timeline;
+
+  return (
+    <div className="grid">
+      <main>
+        <Outlet />
+      </main>
+
+      {/* Each zone renders only when both contributed AND visible */}
+      {DetailPanel && visibleZones.detailPanel && (
+        <aside><DetailPanel /></aside>
+      )}
+      {Inspector && visibleZones.inspector && (
+        <aside><Inspector /></aside>
+      )}
+      {Timeline && visibleZones.timeline && (
+        <footer><Timeline /></footer>
+      )}
+    </div>
+  );
+}
+```
+
+Modules toggle visibility via the shared store, not by manipulating zone values:
+
+```typescript
+// Inside a module component
+import { useStore } from "@example/app-shared";
+
+function ToolbarActions() {
+  const toggleZone = useStore("ui", (s) => s.toggleZone);
+
+  return (
+    <button onClick={() => toggleZone("inspector")}>
+      Toggle Inspector
+    </button>
+  );
+}
+```
+
+**Why not dynamically set zone values to `undefined`?** Zones are static declarations on routes and module descriptors — they describe what a route *can* contribute, not what's currently shown. Mixing visibility state into zone values would mean routes need runtime logic in `staticData`, which is meant to be static. Keep the two concerns separate:
+
+| Concern    | Mechanism                        | Changes when…                 |
+| ---------- | -------------------------------- | ----------------------------- |
+| Zone content | `staticData` / descriptor `zones` | Route or active tab changes |
+| Zone visibility | Zustand store / React state    | User clicks a button        |
 
 ## Rules
 

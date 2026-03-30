@@ -454,6 +454,20 @@ function InvoiceActions({ invoiceId }: { invoiceId: string }) {
 }
 ```
 
+## Zone initial state and tab navigation
+
+Zones are reactive — they re-derive on every route change and tab switch. There is no implicit default and no "sticky" carry-over from a previous page or tab.
+
+**Initial render:** When no route or module contributes a zone, every key is `undefined`. The shell layout should render fallback content:
+
+```typescript
+{zones.contextualPanel ? <zones.contextualPanel /> : <DefaultPanel />}
+```
+
+**Tab switch:** When the user switches from a tab whose module declares `zones: { contextualPanel: BillingPanel }` to a tab whose module declares no zones, `contextualPanel` reverts to whatever the route hierarchy provides — or `undefined` if no route sets it either. This is intentional: the shell always reflects the currently active content, not the previously active content.
+
+**Persistent zones across tabs:** If a zone should always be present regardless of the active tab, set it on a parent layout route via `staticData`. Module descriptor zones override route zones for the same key, so the route value acts as a fallback when the active module doesn't contribute that zone.
+
 ## Summary: what goes where
 
 | Concern                              | Owned by | Mechanism                                                     |
