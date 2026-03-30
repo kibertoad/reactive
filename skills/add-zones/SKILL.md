@@ -59,9 +59,9 @@ With this declaration, `createRoute({ staticData: { detailPanle: ... } })` produ
 ## Step 3: Contribute zones from module routes
 
 ```typescript
-// modules/users/src/index.ts
+// modules/users/src/index.ts (inside createRoutes callback)
 import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
-import UserDetailSidebar from "./components/UserDetailSidebar.js";
+import { UserDetailSidebar } from "./components/UserDetailSidebar.js";
 
 const userDetail = createRoute({
   getParentRoute: () => usersRoot,
@@ -120,6 +120,8 @@ Zones are derived entirely from the currently matched route hierarchy — they d
 
 ```typescript
 // This layout route stays matched for all /users/* routes
+import { createRoute } from "@tanstack/react-router";
+
 const usersLayout = createRoute({
   getParentRoute: () => rootRoute,
   id: "users-layout",

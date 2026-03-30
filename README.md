@@ -888,6 +888,7 @@ Zone values are optional - not every route populates every zone.
 Modules set zones via TanStack Router's `staticData` on individual routes. Different routes within the same module can contribute different zone components:
 
 ```typescript
+import { createRoute } from "@tanstack/react-router";
 import { UserDetailActions } from "./components/UserDetailActions.js";
 import { UserDetailPanel } from "./components/UserDetailPanel.js";
 
